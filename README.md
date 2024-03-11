@@ -2,12 +2,12 @@
 General Diffusion Policies - Yixuan Wang's Internship Project
 
 ## TODO
-- [x] Installation
-- [ ] Sim data generation
 - [ ] Training
 - [ ] Sim inference
 - [ ] Data visualization
+- [ ] Select your DINOv2 features
 - [ ] Real inference
+- [ ] Clean up robomimic database
 
 ## Installation
 We recommend [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) instead of the standard anaconda distribution for faster installation: 
@@ -20,14 +20,21 @@ pip install -e d3fields_dev/
 
 ## Create dataset
 
+### Existing environments
+We use the [SAPIEN](https://sapien.ucsd.edu/docs/latest/index.html) to build the simulation environments. To create the data of heuristic policy for single episode, use the following command:
+```console
+python gen_data.py [episode_idx] [dataset_dir] [task_name] --headless --obj_name [OBJ_NAME] --mode []
+```
+Meanings for each argument are visible when running `python gen_data.py --help`.
+
+### Customize environments
+If you want to create your own environments with different objects, please imitate `sapien_env/sapien_env/sim_env/mug_collect_env.py`. Note that `sim_env/custom_env.py` does NOT contain the robot. To add robots, please imitate `sapien_env/sapien_env/rl_env/mug_collect_env.py` to add robots. To adjust camera views, please change `YX_TABLE_TOP_CAMERAS` within `sapien_env/sapien_env/gui/gui_base.py`.
 
 ## Download data
+If you want to download a small dataset to test the whole pipeline, you can run `./scripts/download_small_data.sh`. For hangning mug and pencil insertion task, you can run the following commands:
 ```console
-mkdir -p data/sapien_env/teleop_data/pick_place_soda
-cd data/sapien_env/teleop_data/pick_place_soda
-gdown 1v264rhqXWqqJfYWcMHiD54OSfvvDH7ak
-unzip small_rand_cola_demo_1.zip -d .
-rm small_rand_cola_demo_1.zip
+./scripts/download_hang_mug.sh
+./scripts/download_pencil_insertion.sh
 ```
 
 ## Training
@@ -42,7 +49,9 @@ python train.py --config-dir=config --config-name=sapien_pick_place_can_d3fields
 ```
 Please wait at least till 2 epoches to make sure that all pipelines are working properly.
 
-## Real Inference
+## Simulation Inference
+
+## Real World Inference
 ### Install Interbotix
 ```console
 curl 'https://raw.githubusercontent.com/Interbotix/interbotix_ros_manipulators/main/interbotix_ros_xsarms/install/amd64/xsarm_amd64_install.sh' > xsarm_amd64_install.sh

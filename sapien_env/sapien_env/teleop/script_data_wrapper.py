@@ -1,12 +1,6 @@
 import os
 from pathlib import Path
 
-import sys
-curr_path = os.path.abspath(__file__)
-for _ in range(3):
-    curr_path = os.path.dirname(curr_path)
-sys.path.append(curr_path)
-
 from tqdm import tqdm
 from sapien_env.utils.misc_utils import get_current_YYYY_MM_DD_hh_mm_ss_ms
 

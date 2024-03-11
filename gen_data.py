@@ -1,32 +1,17 @@
 import os
-import time
 
 import cv2
-import h5py
 import numpy as np
 import transforms3d
-from pathlib import Path
 import sapien.core as sapien
 from omegaconf import OmegaConf
 import hydra
-from tqdm import tqdm
 
-import sys
-curr_path = os.path.abspath(__file__)
-for _ in range(3):
-    curr_path = os.path.dirname(curr_path)
-sys.path.append(curr_path)
-import sys
 from sapien_env.rl_env.mug_collect_env import BaseRLEnv
 from sapien_env.sim_env.constructor import add_default_scene_light
 from sapien_env.gui.gui_base import GUIBase, DEFAULT_TABLE_TOP_CAMERAS, YX_TABLE_TOP_CAMERAS
 from gild.common.data_utils import save_dict_to_hdf5
 from gild.common.kinematics_utils import KinHelper
-
-MIN_VALUE = 0.0  # Minimum value of the contact sensor data
-MAX_VALUE = 0.05  # Maximum value of the contact sensor data
-WINDOW_WIDTH = 400
-WINDOW_HEIGHT = 300
 
 def stack_dict(dic):
     # stack list of numpy arrays into a single numpy array inside a nested dict
@@ -240,14 +225,13 @@ def main_env(episode_idx, dataset_dir, headless, mode, task_name, manip_obj=None
 
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser(
-        description='sum the integers at the command line')
-    parser.add_argument('episode_idx')
-    parser.add_argument('dataset_dir')
-    parser.add_argument('task_name')
-    parser.add_argument('--headless', action='store_true')
-    parser.add_argument('--obj_name', default=None)
-    parser.add_argument('--mode', default='straight')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('episode_idx', help='random seed for the episode')
+    parser.add_argument('dataset_dir', help='directory to save the dataset')
+    parser.add_argument('task_name', help='task name, including hang_mug, mug_collect, pen_insertion')
+    parser.add_argument('--headless', action='store_true', help='whether to run in headless mode')
+    parser.add_argument('--obj_name', default=None, help='manipulated object name. The full list is shown in YX_DEFAULT_SCALE at sapien_env/sapien_env/utils/yx_object_utils.py')
+    parser.add_argument('--mode', default='straight', help='mode for scripted policy. Examples are shown in generate_trajectory() at sapien_env/sapien_env/teleop/mug_collect_scripted_policy.py')
     args = parser.parse_args()
 
     main_env(episode_idx=int(args.episode_idx),

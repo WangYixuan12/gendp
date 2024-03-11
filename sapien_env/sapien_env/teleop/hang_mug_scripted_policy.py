@@ -1,31 +1,9 @@
 import numpy as np
 from pyquaternion import Quaternion
-import IPython
 import transforms3d
-e = IPython.embed
 import sapien.core as sapien
-import sys
-
-import os
-
-curr_path = os.path.abspath(__file__)
-for _ in range(3):
-    curr_path = os.path.dirname(curr_path)
-sys.path.append(curr_path)
-import sys
-sys.path.append('/home/bing4090/yixuan_old_branch/general_dp/sapien_env')
-sys.path.append('/home/bing4090/yixuan_old_branch/general_dp/general_dp')
 
 from sapien_env.rl_env.hang_mug_env import HangMugRLEnv
-from sapien_env.sim_env.constructor import add_default_scene_light
-from sapien_env.sapien_env.gui.gui_base import GUIBase, DEFAULT_TABLE_TOP_CAMERAS
-from sapien_env.teleop.teleop_robot import TeleopRobot
-from sapien_env.sapien_env.gui.gui_base import GUIBase, DEFAULT_TABLE_TOP_CAMERAS, YX_TABLE_TOP_CAMERAS
-from gild.common.kinematics_utils import KinHelper
-MIN_VALUE = 0.0  # Minimum value of the contact sensor data
-MAX_VALUE = 0.05  # Maximum value of the contact sensor data
-WINDOW_WIDTH = 400
-WINDOW_HEIGHT = 300
 
 class SingleArmPolicy:
     def __init__(self, inject_noise=False):

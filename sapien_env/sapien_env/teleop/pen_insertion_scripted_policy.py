@@ -1,26 +1,11 @@
 import numpy as np
 from pyquaternion import Quaternion
-import IPython
 import transforms3d
-e = IPython.embed
 import sapien.core as sapien
-import sys
-
-import os
-
-curr_path = os.path.abspath(__file__)
-for _ in range(3):
-    curr_path = os.path.dirname(curr_path)
-sys.path.append(curr_path)
-import sys
-sys.path.append('/home/bing4090/yixuan_old_branch/general_dp/sapien_env')
-sys.path.append('/home/bing4090/yixuan_old_branch/general_dp/general_dp')
 
 from sapien_env.rl_env.pen_insertion_env import PenInsertionRLEnv
 from sapien_env.sim_env.constructor import add_default_scene_light
-from sapien_env.sapien_env.gui.gui_base import GUIBase, DEFAULT_TABLE_TOP_CAMERAS
-from sapien_env.teleop.teleop_robot import TeleopRobot
-from sapien_env.sapien_env.gui.gui_base import GUIBase, DEFAULT_TABLE_TOP_CAMERAS, YX_TABLE_TOP_CAMERAS
+from sapien_env.gui.gui_base import GUIBase, DEFAULT_TABLE_TOP_CAMERAS, YX_TABLE_TOP_CAMERAS
 from gild.common.kinematics_utils import KinHelper
 
 
@@ -173,7 +158,6 @@ def transform_action_from_world_to_robot(action : np.ndarray, pose : sapien.Pose
     return action_robot
 
 def main_env():
-    teleop = TeleopRobot('panda')
     kin_helper = KinHelper(robot_name="panda")
     max_timesteps = 400
     num_episodes = 50

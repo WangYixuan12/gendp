@@ -1,23 +1,9 @@
 import numpy as np
-from pyquaternion import Quaternion
-import IPython
 import transforms3d
-e = IPython.embed
-import os
-import h5py
-import cv2
-import sys
-import torch
-import sys
-sys.path.append('/home/bing4090/yixuan_old_branch/general_dp/sapien_env')
 from sapien_env.rl_env.mug_collect_env import MugCollectRLEnv
 from sapien_env.sim_env.constructor import add_default_scene_light
-from sapien_env.sapien_env.gui.gui_base import GUIBase, DEFAULT_TABLE_TOP_CAMERAS
+from sapien_env.gui.gui_base import GUIBase, DEFAULT_TABLE_TOP_CAMERAS
 from sapien_env.teleop.teleop_robot import TeleopRobot
-MIN_VALUE = 0.0  # Minimum value of the contact sensor data
-MAX_VALUE = 0.05  # Maximum value of the contact sensor data
-WINDOW_WIDTH = 400
-WINDOW_HEIGHT = 300
 
 class SingleArmPolicy:
     def __init__(self, inject_noise=False):
@@ -131,27 +117,6 @@ class SingleArmPolicy:
                 {"t": 170, "xyz": goal_position +np.array([0.0,0,place_h]), "quat": ee_link_pose.q, "gripper": 0.01},
                 {"t": 180, "xyz": goal_position +np.array([0.0,0,place_h]), "quat": ee_link_pose.q, "gripper": 0.09},
             ]
-
-def plot_contact_color_map(contact_data, sensor_number_dim):
-    contact_data_left= contact_data[:sensor_number_dim]
-    contact_data_right= contact_data[sensor_number_dim:]
-    contact_data_left= contact_data_left.reshape((4,4))
-    contact_data_right= contact_data_right.reshape((4,4))
-    
-    contact_data_left_norm = (contact_data_left - MIN_VALUE) / (MAX_VALUE - MIN_VALUE)
-    contact_data_right_norm = (contact_data_right -  MIN_VALUE) / (MAX_VALUE - MIN_VALUE)
-
-    contact_data_left_norm_scaled = (contact_data_left_norm * 255).astype(np.uint8)
-    contact_data_right_norm_scaled = (contact_data_right_norm * 255).astype(np.uint8)
-
-    colormap_left = cv2.applyColorMap(contact_data_left_norm_scaled, cv2.COLORMAP_VIRIDIS)
-    colormap_right = cv2.applyColorMap(contact_data_right_norm_scaled, cv2.COLORMAP_VIRIDIS)
-    
-    separator = np.ones((colormap_left.shape[0],1,3), dtype=np.uint8) * 255
-
-    combined_colormap = np.concatenate((colormap_left, separator,colormap_right), axis=1)
-    cv2.imshow("Left finger and Right finger Contact Data", combined_colormap )
-    cv2.waitKey(1)
 
 def main_env():
     teleop = TeleopRobot('panda')
