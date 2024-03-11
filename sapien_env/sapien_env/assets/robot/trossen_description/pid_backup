@@ -1,0 +1,13 @@
+    #trossen arm tacitle
+    # trossen_arm_control_params = np.array([220, 170, 60])
+    # trossen_arm_control_params_waist = np.array([400, 500, 60])
+    # trossen_finger_control_params= np.array([300,100, 3])
+# trossen arm tacitle
+# for joint in robot.get_active_joints():
+#     name = joint.get_name()
+#     if "waist" in name or "fore_roll" in name or "wrist_rotate" in name:
+#         joint.set_drive_property(*(8* trossen_arm_control_params_waist), mode="force")
+#     if "left_finger" in name or "right_finger" in name:
+#         joint.set_drive_property(*(4 * trossen_finger_control_params), mode="force")
+#     else:
+#         joint.set_drive_property(*(8* trossen_arm_control_params), mode="force")
