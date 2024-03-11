@@ -1,6 +1,20 @@
 # general_dp
 General Diffusion Policies - Yixuan Wang's Internship Project
 
+# Table of Contents
+1. [Install](#install)
+2. [Generate Dataset](#generate-dataset)
+    1. [Generate from Existing Environments](#generate-from-existing-environments)
+    2. [Generate from Customized Environments](#generate-from-customized-environments)
+3. [Download Data](#download-data)
+4. [Train](#train)
+    1. [Visualize Semantic Fields](#visualize-semantic-fields)
+    2. [Train GILD](#train-gild)
+    3. [Config Explanation](#config-explanation)
+    4. [Adapt to New Task](#adapt-to-new-task)
+5. [Infer in Simulator](#infer-in-simulator)
+6. [Infer in Real World](#infer-in-real-world)
+
 ## TODO
 - [ ] Training
 - [ ] Sim inference
@@ -9,7 +23,7 @@ General Diffusion Policies - Yixuan Wang's Internship Project
 - [ ] Real inference
 - [ ] Clean up robomimic database
 
-## Installation
+## Install
 We recommend [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) instead of the standard anaconda distribution for faster installation: 
 ```console
 mamba env create -f conda_environment.yaml
@@ -18,40 +32,47 @@ pip install -e robomimic/
 pip install -e d3fields_dev/
 ```
 
-## Create dataset
+## Generate Dataset
 
-### Existing environments
+### Generate from Existing Environments
 We use the [SAPIEN](https://sapien.ucsd.edu/docs/latest/index.html) to build the simulation environments. To create the data of heuristic policy for single episode, use the following command:
 ```console
 python gen_data.py [episode_idx] [dataset_dir] [task_name] --headless --obj_name [OBJ_NAME] --mode []
 ```
 Meanings for each argument are visible when running `python gen_data.py --help`.
 
-### Customize environments
+### Generate from Customized Environments
 If you want to create your own environments with different objects, please imitate `sapien_env/sapien_env/sim_env/mug_collect_env.py`. Note that `sim_env/custom_env.py` does NOT contain the robot. To add robots, please imitate `sapien_env/sapien_env/rl_env/mug_collect_env.py` to add robots. To adjust camera views, please change `YX_TABLE_TOP_CAMERAS` within `sapien_env/sapien_env/gui/gui_base.py`.
 
-## Download data
+## Download Data
 If you want to download a small dataset to test the whole pipeline, you can run `./scripts/download_small_data.sh`. For hangning mug and pencil insertion task, you can run the following commands:
 ```console
 ./scripts/download_hang_mug.sh
 ./scripts/download_pencil_insertion.sh
 ```
+If the scripts do not work, you could manully download the data from [UIUC Box](https://uofi.box.com/s/n5gahx98s14actc695tn3z0fzl8twcyk) or [Google Drive](https://drive.google.com/drive/folders/1_znHpzBj4c3fulXqt-0UjceRij2SApsH?usp=drive_link) and unzip them.
 
-## Training
+## Train
+
+### Visualize Semantic Fields
+### Train GILD
 To run training, use the following command:
 ```console
 # some env variables for the training to run
 export OMP_NUM_THREADS=1
 export TOKENIZERS_PARALLELISM=true
 export MKL_NUM_THREADS=1
-cd [PATH_TO_REPO]/general_dp
-python train.py --config-dir=config --config-name=sapien_pick_place_can_d3fields_test.yaml training.seed=42 training.device=cuda training.device_id=0 data_root=[PATH_TO_REPO]
+cd [PATH_TO_REPO]/gild
+python train.py --config-dir=config --config-name=sapien_pick_place_can_d3fields_test.yaml training.seed=42 training.device=cuda training.device_id=0 data_root=[PATH_TO_DATA]
 ```
 Please wait at least till 2 epoches to make sure that all pipelines are working properly.
 
-## Simulation Inference
+### Config Explanation
+### Adapt to New Task
 
-## Real World Inference
+## Infer in Simulator
+
+## Infer in Real World
 ### Install Interbotix
 ```console
 curl 'https://raw.githubusercontent.com/Interbotix/interbotix_ros_manipulators/main/interbotix_ros_xsarms/install/amd64/xsarm_amd64_install.sh' > xsarm_amd64_install.sh
