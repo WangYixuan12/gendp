@@ -71,11 +71,13 @@ If the scripts do not work, you could manully download the data from [UIUC Box](
 ## Visualize Dataset
 
 ### Visualize 2D Observation
-To visualize observations within hdf5 files, use the following command:
+To visualize image observations within hdf5 files, use the following command:
 ```console
-python gild/tests/vis_sapien_data_2d.py 
+python gild/tests/vis_data_2d.py 
 ```
-You could adjust dataset path and observation keys in `gild/tests/vis_sapien_data_2d.py`.
+You could adjust dataset path and observation keys in `gild/tests/vis_data_2d.py`.
+
+### Visualize Aggregated 3D Observation
 
 ### Visualize 3D Semantic Fields
 

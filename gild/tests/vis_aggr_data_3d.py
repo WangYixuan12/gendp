@@ -21,8 +21,6 @@ vis_robot = False
 vis_action = True
 
 data_dir = '/home/yixuan/general_dp/data/real_aloha_demo/open_bag_v2'
-save_dir = f'{data_dir}/vis'
-os.system(f'mkdir -p {save_dir}')
 
 visualizer = o3d.visualization.Visualizer()
 visualizer.create_window()
