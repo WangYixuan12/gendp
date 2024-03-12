@@ -518,7 +518,7 @@ def opengl2cam(pcd, cam_extrinsic, global_scale):
     # print()
     return cam
 
-def depth2fgpcd(depth, mask, cam_params, preserve_zero=False):
+def depth2fgpcd(depth: np.ndarray, mask: np.ndarray, cam_params: List, preserve_zero: bool = False) -> np.ndarray:
     # depth: (h, w)
     # fgpcd: (n, 3)
     # mask: (h, w)
@@ -561,46 +561,36 @@ def rmbg(img, bg):
     img[img_diff < 1e-3] = np.ones(3, dtype=np.uint8) * 255
     return img
 
-def voxel_downsample(pcd, voxel_size, pcd_color=None):
+def voxel_downsample(pcd: np.ndarray, voxel_size: float, pcd_color: np.ndarray = None) -> np.ndarray:
     # pcd: (n, 3) numpy array
     # voxel_size: float
     # pcd_color: (n, 3) numpy array
 
     if pcd.shape[0] == 0:
         return pcd, pcd_color
-    
-    def _init_low_level_memory(lower_bound, higher_bound, voxel_size, voxel_num):
-        def pcd_to_voxel(pcds):
-            if type(pcds) == list:
-                pcds = np.array(pcds)
+
+    def _init_low_level_memory(
+        lower_bound: np.ndarray, higher_bound: np.ndarray, voxel_size: float, voxel_num: List
+    ) -> np.ndarray:
+        def pcd_to_voxel(pcds: np.ndarray) -> np.ndarray:
             # The pc is in numpy array with shape (..., 3)
             # The voxel is in numpy array with shape (..., 3)
             voxels = np.floor((pcds - lower_bound) / voxel_size).astype(np.int32)
             return voxels
 
-        def voxel_to_pcd(voxels):
-            if type(voxels) == list:
-                voxels = np.array(voxels)
+        def voxel_to_pcd(voxels: np.ndarray) -> np.ndarray:
             # The voxel is in numpy array with shape (..., 3)
             # The pc is in numpy array with shape (..., 3)
             pcds = voxels * voxel_size + lower_bound
             return pcds
 
-        def voxel_to_index(voxels):
-            if type(voxels) == list:
-                voxels = np.array(voxels)
+        def voxel_to_index(voxels: np.ndarray) -> np.ndarray:
             # The voxel is in numpy array with shape (..., 3)
             # The index is in numpy array with shape (...,)
-            indexes = (
-                voxels[..., 0] * voxel_num[1] * voxel_num[2]
-                + voxels[..., 1] * voxel_num[2]
-                + voxels[..., 2]
-            )
+            indexes = voxels[..., 0] * voxel_num[1] * voxel_num[2] + voxels[..., 1] * voxel_num[2] + voxels[..., 2]
             return indexes
 
-        def index_to_voxel(indexes):
-            if type(indexes) == list:
-                indexes = np.array(indexes)
+        def index_to_voxel(indexes: np.ndarray) -> np.ndarray:
             # The index is in numpy array with shape (...,)
             # The voxel is in numpy array with shape (..., 3)
             voxels = np.zeros((indexes.shape + (3,)), dtype=np.int32)
@@ -610,14 +600,14 @@ def voxel_downsample(pcd, voxel_size, pcd_color=None):
             voxels[..., 0] = indexes // voxel_num[1]
             return voxels
 
-        def pcd_to_index(pcds):
+        def pcd_to_index(pcds: np.ndarray) -> np.ndarray:
             # The pc is in numpy array with shape (..., 3)
             # The index is in numpy array with shape (...,)
             voxels = pcd_to_voxel(pcds)
             indexes = voxel_to_index(voxels)
             return indexes
 
-        def index_to_pcd(indexes):
+        def index_to_pcd(indexes: np.ndarray) -> np.ndarray:
             # The index is in numpy array with shape (...,)
             # The pc is in numpy array with shape (..., 3)
             voxels = index_to_voxel(indexes)
@@ -632,9 +622,9 @@ def voxel_downsample(pcd, voxel_size, pcd_color=None):
             pcd_to_index,
             index_to_pcd,
         )
-    
-    lower_bound = pcd.min(axis=0) # (3,)
-    higher_bound = pcd.max(axis=0) # (3,)
+
+    lower_bound = pcd.min(axis=0)  # (3,)
+    higher_bound = pcd.max(axis=0)  # (3,)
     voxel_num = ((higher_bound - lower_bound) / voxel_size).astype(np.int32)
     if np.any(voxel_num == 0):
         return pcd, pcd_color
@@ -646,12 +636,13 @@ def voxel_downsample(pcd, voxel_size, pcd_color=None):
         pcd_to_index,
         index_to_pcd,
     ) = _init_low_level_memory(lower_bound, higher_bound, voxel_size, voxel_num)
-    
+
     voxel_idx = pcd_to_index(pcd)
     voxel_idx_unique, pcd_idx = np.unique(voxel_idx, return_index=True)
     downpcd = index_to_pcd(voxel_idx_unique)
     downpcd_color = None if pcd_color is None else pcd_color[pcd_idx]
     return downpcd, downpcd_color
+
 
 def test_voxel_downsample():
     init_pcd = np.random.rand(10000, 3)
@@ -738,7 +729,7 @@ def lighten_img(img, factor=1.2):
     # os.system('rm tmp_1.png tmp_2.png')
     return color_lighten_img
 
-def np2o3d(pcd, color=None):
+def np2o3d(pcd: np.ndarray, color: Optional[np.ndarray] = None) -> o3d.geometry.PointCloud:
     # pcd: (n, 3)
     # color: (n, 3)
     pcd_o3d = o3d.geometry.PointCloud()
