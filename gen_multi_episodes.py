@@ -4,6 +4,7 @@ from pathlib import Path
 from tqdm import tqdm
 from sapien_env.utils.misc_utils import get_current_YYYY_MM_DD_hh_mm_ss_ms
 
+### hyper parameter specification
 mode = 'straight'
 # obj = 'cola'
 # obj = 'diet_soda'
@@ -25,17 +26,12 @@ dataset_name = f'{obj}_demo_100'
 headless = False
 s_idx = 50
 e_idx = 100
-seed_range = range(s_idx, e_idx)
-# seed_range = [1, 18, 23, 24, 32, 36, 46, 54, 65, 69, 91, 94, 95]
-# data_root = '/scratch/bcfs/ywang41/general_dp'
 data_root = '/media/yixuan_2T/diffusion_policy'
-if dataset_name is None:
-    dataset_dir = f"{data_root}/data/sapien_demo/{get_current_YYYY_MM_DD_hh_mm_ss_ms()}"
-else:
-    dataset_dir = f"{data_root}/data/sapien_demo/{dataset_name}"
+dataset_dir = f"{data_root}/data/sapien_demo/{dataset_name}"
 os.system(f'mkdir -p {dataset_dir}')
 
-# copy current repo
+
+### copy current repo
 save_repo_path = f'sapien_env'
 save_repo_dir = os.path.join(dataset_dir, save_repo_path)
 os.system(f'mkdir -p {save_repo_dir}')
@@ -46,6 +42,8 @@ for sub_dir in os.listdir(curr_repo_dir):
     if sub_dir not in ignore_list:
         os.system(f'cp -r {os.path.join(curr_repo_dir, sub_dir)} {save_repo_dir}')
 
+### generate episodes
+seed_range = range(s_idx, e_idx)
 for i in tqdm(seed_range):
     if headless:
         PY_CMD = f'python sapien_env/teleop/script_policy_rollout.py {i} {dataset_dir} {mode} {task_name} --headless --obj_name {obj}'

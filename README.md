@@ -6,14 +6,21 @@ General Diffusion Policies - Yixuan Wang's Internship Project
 2. [Generate Dataset](#generate-dataset)
     1. [Generate from Existing Environments](#generate-from-existing-environments)
     2. [Generate from Customized Environments](#generate-from-customized-environments)
-3. [Download Data](#download-data)
-4. [Train](#train)
+3. [Download Dataset](#download-dataset)
+4. [Visualize Dataset](#visualize-dataset)
+    1. [Visualize 2D Observation](#visualize-2d-observation)
+    2. [Visualize 3D Semantic Fields](#visualize-3d-semantic-fields)
+5. [Train](#train)
     1. [Visualize Semantic Fields](#visualize-semantic-fields)
     2. [Train GILD](#train-gild)
     3. [Config Explanation](#config-explanation)
     4. [Adapt to New Task](#adapt-to-new-task)
-5. [Infer in Simulator](#infer-in-simulator)
-6. [Infer in Real World](#infer-in-real-world)
+6. [Infer in Simulator](#infer-in-simulator)
+7. [Deploy in Real World](#deploy-in-real-world)
+    1. [Set Up Robot](#set-up-robot)
+    2. [Collect Demonstration](#collect-demonstration)
+    3. [Train](#train)
+    4. [Infer in Real World](#infer-in-real-world)
 
 ## TODO
 - [ ] Training
@@ -28,6 +35,8 @@ We recommend [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) i
 ```console
 mamba env create -f conda_environment.yaml
 pip install -e gild/
+cd external
+pip install -e sapien_env/
 pip install -e robomimic/
 pip install -e d3fields_dev/
 ```
@@ -37,20 +46,38 @@ pip install -e d3fields_dev/
 ### Generate from Existing Environments
 We use the [SAPIEN](https://sapien.ucsd.edu/docs/latest/index.html) to build the simulation environments. To create the data of heuristic policy for single episode, use the following command:
 ```console
-python gen_data.py [episode_idx] [dataset_dir] [task_name] --headless --obj_name [OBJ_NAME] --mode []
+python gen_single_episode.py [episode_idx] [dataset_dir] [task_name] --headless --obj_name [OBJ_NAME] --mode [MODE_NAME]
 ```
 Meanings for each argument are visible when running `python gen_data.py --help`.
 
 ### Generate from Customized Environments
 If you want to create your own environments with different objects, please imitate `sapien_env/sapien_env/sim_env/mug_collect_env.py`. Note that `sim_env/custom_env.py` does NOT contain the robot. To add robots, please imitate `sapien_env/sapien_env/rl_env/mug_collect_env.py` to add robots. To adjust camera views, please change `YX_TABLE_TOP_CAMERAS` within `sapien_env/sapien_env/gui/gui_base.py`.
 
-## Download Data
-If you want to download a small dataset to test the whole pipeline, you can run `./scripts/download_small_data.sh`. For hangning mug and pencil insertion task, you can run the following commands:
+### Generate Large-Scale Data
+We notice that sapien renderer have memory leak for large-scale data generation. To avoid this, we use bash commands to generate large-scale data.
 ```console
-./scripts/download_hang_mug.sh
-./scripts/download_pencil_insertion.sh
+python gen_multi_episodes.py
+```
+Arguments can be edited within `gen_multi_episodes.py`.
+
+## Download Dataset
+If you want to download a small dataset to test the whole pipeline, you can run `bash scripts/download_small_data.sh`. For hangning mug and pencil insertion task, you can run the following commands:
+```console
+bash scripts/download_hang_mug.sh
+bash scripts/download_pencil_insertion.sh
 ```
 If the scripts do not work, you could manully download the data from [UIUC Box](https://uofi.box.com/s/n5gahx98s14actc695tn3z0fzl8twcyk) or [Google Drive](https://drive.google.com/drive/folders/1_znHpzBj4c3fulXqt-0UjceRij2SApsH?usp=drive_link) and unzip them.
+
+## Visualize Dataset
+
+### Visualize 2D Observation
+To visualize observations within hdf5 files, use the following command:
+```console
+python gild/tests/vis_sapien_data_2d.py 
+```
+You could adjust dataset path and observation keys in `gild/tests/vis_sapien_data_2d.py`.
+
+### Visualize 3D Semantic Fields
 
 ## Train
 
@@ -72,8 +99,11 @@ Please wait at least till 2 epoches to make sure that all pipelines are working 
 
 ## Infer in Simulator
 
-## Infer in Real World
-### Install Interbotix
+## Deploy in Real World
+### Set Up Robot
+### Collect Demonstration
+### Train
+### Infer in Real World
 ```console
 curl 'https://raw.githubusercontent.com/Interbotix/interbotix_ros_manipulators/main/interbotix_ros_xsarms/install/amd64/xsarm_amd64_install.sh' > xsarm_amd64_install.sh
 chmod +x xsarm_amd64_install.sh
@@ -88,7 +118,6 @@ catkin_make
 2. Remember to reboot the computer after the installation.
 
 
-### Edit USB rules
 ```console
 sudo vim /etc/udev/rules.d/99-interbotix-udev.rules
 ```
