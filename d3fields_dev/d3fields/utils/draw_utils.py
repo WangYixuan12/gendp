@@ -1,6 +1,8 @@
 import time
 import os
 import copy
+from enum import Enum
+from typing import Dict, List, Optional, Union
 
 from d3fields.utils.my_utils import depth2fgpcd, np2o3d, voxel_downsample
 import numpy as np
@@ -8,13 +10,26 @@ import torch
 import cv2
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
-from matplotlib import cm
+from matplotlib import colormaps
 import open3d as o3d
 
 from pytorch3d.ops import ball_query
 
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+
+
+class ImgEncoding(Enum):
+    RGB_UINT8 = "rgb_uint8"
+    BGR_UINT8 = "bgr_uint8"
+    DEPTH_UINT16 = "depth_uint16"
+    DEPTH_FLOAT = "depth_float"
+
+
+class ExtriConvention(Enum):
+    CAM_IN_WORLD = "cam_in_world"  # camera pose in world coord
+    WORLD_IN_CAM = "world_in_cam"  # world pose in camera coord
+
 
 def newline(p1, p2):
     ax = plt.gca()
@@ -358,56 +373,90 @@ def color_seg(colors, color_name):
         mask = mask | ((colors_hsv[:, :, :, 2] > v_min) & (colors_hsv[:, :, :, 2] < v_max))
     return mask
 
-def aggr_point_cloud_from_data(colors,
-                               depths,
-                               Ks,
-                               poses,
-                               downsample=True,
-                               downsample_r = 0.01,
-                               masks=None,
-                               boundaries=None,
-                               out_o3d=True,
-                               excluded_pts=None,
-                               exclude_threshold=0.01,
-                               exclude_colors=[]):
+def vis_depth(raw_depth: np.ndarray, min: float = 0.1, max: float = 1.0, fmt: str = "uint16") -> np.ndarray:
+    """convert raw depth to something that can be visualized by opencv or matplotlib
+
+    Args:
+        raw_depth: (numpy.ndarray) depth in shape of (h, w)
+        min: mininum depth distance for vis in meter
+        max: maximum depth distance for vis in meter
+        fmt: 'uint16' or 'float'
+
+    Return:
+        depth_img: (numpy.ndarray) depth for vis in shape of (h, w, 3)
+    """
+    cmap = colormaps.get_cmap("plasma")
+    H, W = raw_depth.shape
+    if fmt == "uint16":
+        raw_depth = raw_depth / 1000.0
+    elif fmt == "float":
+        pass
+    else:
+        raise ValueError(f"not supported format {fmt}")
+
+    depth_img = np.clip(raw_depth, min, max)
+    depth_img = cmap(depth_img.reshape(H * W))[:, :3]
+    depth_img = depth_img.reshape(H, W, 3)
+    return depth_img
+
+def aggr_point_cloud_from_data(
+    colors: np.ndarray,
+    depths: np.ndarray,
+    Ks: np.ndarray,
+    poses: np.ndarray,
+    downsample: bool = True,
+    downsample_r: float = 0.01,
+    masks: np.ndarray = None,
+    boundaries: Optional[Dict] = None,
+    out_o3d: bool = True,
+    #    excluded_pts=None,
+    #    exclude_threshold=0.01,):
+    color_fmt: ImgEncoding = ImgEncoding.RGB_UINT8,
+    depth_fmt: ImgEncoding = ImgEncoding.DEPTH_FLOAT,
+    pose_fmt: ExtriConvention = ExtriConvention.WORLD_IN_CAM,
+) -> Optional[np.ndarray]:
     # colors: [N, H, W, 3] numpy array in uint8
     # depths: [N, H, W] numpy array in meters
     # Ks: [N, 3, 3] numpy array
     # poses: [N, 4, 4] numpy array
     # masks: [N, H, W] numpy array in bool
     N, H, W, _ = colors.shape
-    colors = colors / 255.
+    if color_fmt == ImgEncoding.RGB_UINT8:
+        colors = colors / 255.0
+    elif color_fmt == ImgEncoding.BGR_UINT8:
+        colors = colors[..., ::-1] / 255.0
+    if depth_fmt == ImgEncoding.DEPTH_UINT16:
+        depths = depths / 1000.0
     start = 0
     end = N
     step = 1
-    pcds = []
+    pcds_ls = []
     pcd_colors = []
+    # TODO: batch it
     for i in range(start, end, step):
         depth = depths[i]
         color = colors[i]
         K = Ks[i]
-        cam_param = [K[0,0], K[1,1], K[0,2], K[1,2]] # fx, fy, cx, cy
+        cam_param = [K[0, 0], K[1, 1], K[0, 2], K[1, 2]]  # fx, fy, cx, cy
         if masks is None:
-            mask = (depth > 0) & (depth < 1.5)
+            mask = depth > 0
         else:
             mask = masks[i] & (depth > 0)
         # mask = np.ones_like(depth, dtype=bool)
-        
-        for exclude_color in exclude_colors:
-            mask = mask & (~color_seg(color[None], exclude_color))[0]
-        
+
         pcd = depth2fgpcd(depth, mask, cam_param)
-        
+
         pose = poses[i]
-        try:
-            pose = np.linalg.inv(pose)
-        except np.linalg.LinAlgError:
-            print('singular matrix')
-            pose = np.linalg.pinv(pose)
-        
+        if pose_fmt == ExtriConvention.WORLD_IN_CAM:
+            try:
+                pose = np.linalg.inv(pose)
+            except np.linalg.LinAlgError:
+                print("singular matrix")
+                pose = np.linalg.pinv(pose)
+
         trans_pcd = pose @ np.concatenate([pcd.T, np.ones((1, pcd.shape[0]))], axis=0)
         trans_pcd = trans_pcd[:3, :].T
-        
+
         # plt.subplot(1, 4, 1)
         # plt.imshow(trans_pcd[:, 0].reshape(H, W))
         # plt.subplot(1, 4, 2)
@@ -417,57 +466,57 @@ def aggr_point_cloud_from_data(colors,
         # plt.subplot(1, 4, 4)
         # plt.imshow(color)
         # plt.show()
-        
+
         color = color[mask]
-        
-        pcds.append(trans_pcd)
+
+        pcds_ls.append(trans_pcd)
         pcd_colors.append(color)
 
-    pcds = np.concatenate(pcds, axis=0)
+    pcds = np.concatenate(pcds_ls, axis=0)
     pcd_colors = np.concatenate(pcd_colors, axis=0)
 
     # post process 1: remove points outside of boundaries
     if boundaries is not None:
-        x_lower = boundaries['x_lower']
-        x_upper = boundaries['x_upper']
-        y_lower = boundaries['y_lower']
-        y_upper = boundaries['y_upper']
-        z_lower = boundaries['z_lower']
-        z_upper = boundaries['z_upper']
-        
-        pcd_mask = (pcds[:, 0] > x_lower) & (pcds[:, 0] < x_upper) &\
-            (pcds[:, 1] > y_lower) & (pcds[:, 1] < y_upper) &\
-                (pcds[:, 2] > z_lower) & (pcds[:, 2] < z_upper)
-        
+        x_lower = boundaries["x_lower"]
+        x_upper = boundaries["x_upper"]
+        y_lower = boundaries["y_lower"]
+        y_upper = boundaries["y_upper"]
+        z_lower = boundaries["z_lower"]
+        z_upper = boundaries["z_upper"]
+
+        pcd_mask = (
+            (pcds[:, 0] > x_lower)
+            & (pcds[:, 0] < x_upper)
+            & (pcds[:, 1] > y_lower)
+            & (pcds[:, 1] < y_upper)
+            & (pcds[:, 2] > z_lower)
+            & (pcds[:, 2] < z_upper)
+        )
+
         pcds = pcds[pcd_mask]
         pcd_colors = pcd_colors[pcd_mask]
-    
+
     # post process 2: downsample
     if downsample:
         pcds, pcd_colors = voxel_downsample(pcds, downsample_r, pcd_colors)
-    
-    # post process 3: exclude points from trans_pcd that are too close to excluded_pts
-    # start_time = time.time()
-    if excluded_pts is not None:
-        pcd_torch = torch.from_numpy(pcds).to(device=torch.device('cuda'), dtype=torch.float32) # [N, 3]
-        excluded_pts_torch = torch.from_numpy(excluded_pts).to(device=torch.device('cuda'), dtype=torch.float32) # [M, 3]
-        # impl 1: naive dist
-        # dist_to_ex = torch.norm(pcd_torch[:, None, :] - excluded_pts_torch[None, :, :], dim=-1) # [N, M]
-        # min_dist_to_ex = torch.min(dist_to_ex, dim=-1)[0] # [N]
-        # min_dist_to_ex_mask = min_dist_to_ex > exclude_threshold # [N]
-        # min_dist_to_ex_mask = min_dist_to_ex_mask.cpu().numpy()
-        
-        # pcds = pcds[min_dist_to_ex_mask]
-        # pcd_colors = pcd_colors[min_dist_to_ex_mask]
-        
-        # impl 2: ball query
-        dists, idx, _ = ball_query(pcd_torch[None], excluded_pts_torch[None], radius=exclude_threshold, K=1, return_nn=False)
-        idx = idx[0, :, 0] # [N]
-        min_dist_to_ex_mask = (idx == -1) # [N], True if no point is within exclude_threshold
-        min_dist_to_ex_mask = min_dist_to_ex_mask.cpu().numpy()
-        pcds = pcds[min_dist_to_ex_mask]
-        pcd_colors = pcd_colors[min_dist_to_ex_mask]
-    
+
+    # # post process 3: exclude points from trans_pcd that are too close to excluded_pts
+    # if excluded_pts is not None:
+    #     pcd_torch = torch.from_numpy(pcds).to(device=torch.device('cuda'), dtype=torch.float32) # [N, 3]
+    #     excluded_pts_torch = torch.from_numpy(excluded_pts)
+    #     excluded_pts_torch = excluded_pts_torch.to(device=torch.device('cuda'), dtype=torch.float32) # [M, 3]
+
+    #     dists, idx, _ = ball_query(pcd_torch[None],\
+    #                                excluded_pts_torch[None],\
+    #                                 radius=exclude_threshold,\
+    #                                     K=1,\
+    #                                         return_nn=False)
+    #     idx = idx[0, :, 0] # [N]
+    #     min_dist_to_ex_mask = (idx == -1) # [N], True if no point is within exclude_threshold
+    #     min_dist_to_ex_mask = min_dist_to_ex_mask.cpu().numpy()
+    #     pcds = pcds[min_dist_to_ex_mask]
+    #     pcd_colors = pcd_colors[min_dist_to_ex_mask]
+
     # post process 4: return o3d point cloud if out_o3d is True
     if out_o3d:
         aggr_pcd = np2o3d(pcds, pcd_colors)
@@ -492,8 +541,9 @@ def draw_pcd_with_spheres(pcd, sphere_np_ls):
             sphere_list.append(sphere)
     o3d.visualization.draw_geometries([pcd] + sphere_list)
 
-class o3dVisualizer():
-    def __init__(self, view_ctrl_info=None, save_path=None) -> None:
+
+class o3dVisualizer:
+    def __init__(self, view_ctrl_info: Optional[Dict] = None, save_path: Optional[str] = None) -> None:
         """initialize o3d visualizer
 
         Args:
@@ -502,19 +552,19 @@ class o3dVisualizer():
         """
         self.view_ctrl_info = view_ctrl_info
         self.save_path = save_path
-        self.visualizer = None
-        self.vis_dict = {}
-        self.mesh_vertices = {}
+        self.visualizer = o3d.visualization.Visualizer()
+        self.vis_dict: Dict[str, o3d.geometry.PointCloud] = {}
+        self.mesh_vertices: Dict[str, np.ndarray] = {}
         self.is_first = True
         self.internal_clock = 0
         if save_path is not None:
-            os.system(f'mkdir -p {save_path}')
-    
-    def start(self):
-        self.visualizer = o3d.visualization.Visualizer()
+            os.system(f"mkdir -p {save_path}")
+
+    def start(self) -> None:
+        # self.visualizer = o3d.visualization.Visualizer()
         self.visualizer.create_window()
-    
-    def update_pcd(self, mesh, mesh_name):
+
+    def update_pcd(self, mesh: o3d.geometry.PointCloud, mesh_name: str) -> None:
         if mesh_name not in self.vis_dict.keys():
             self.vis_dict[mesh_name] = o3d.geometry.PointCloud()
             self.vis_dict[mesh_name].points = mesh.points
@@ -523,14 +573,24 @@ class o3dVisualizer():
         else:
             self.vis_dict[mesh_name].points = mesh.points
             self.vis_dict[mesh_name].colors = mesh.colors
-    
-    def add_triangle_mesh(self, type, mesh_name, color=None, **args):
-        if type == 'sphere':
-            mesh = o3d.geometry.TriangleMesh.create_sphere(**args)
-        elif type == 'box':
-            mesh = o3d.geometry.TriangleMesh.create_box(**args)
-        elif type == 'origin':
-            mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(**args)
+
+    def add_triangle_mesh(
+        self,
+        type: str,
+        mesh_name: str,
+        color: Optional[np.ndarray] = None,
+        radius: float = 0.1,
+        width: float = 0.1,
+        height: float = 0.1,
+        depth: float = 0.1,
+        size: float = 0.1,
+    ) -> None:
+        if type == "sphere":
+            mesh = o3d.geometry.TriangleMesh.create_sphere(radius=radius)
+        elif type == "box":
+            mesh = o3d.geometry.TriangleMesh.create_box(width=width, height=height, depth=depth)
+        elif type == "origin":
+            mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(size=size)
         else:
             raise NotImplementedError
         if color is not None:
@@ -538,12 +598,12 @@ class o3dVisualizer():
         self.vis_dict[mesh_name] = mesh
         self.mesh_vertices[mesh_name] = np.array(mesh.vertices).copy()
         self.visualizer.add_geometry(self.vis_dict[mesh_name])
-    
-    def update_triangle_mesh(self, mesh_name, tf):
+
+    def update_triangle_mesh(self, mesh_name: str, tf: np.ndarray) -> None:
         tf_vertices = self.mesh_vertices[mesh_name] @ tf[:3, :3].T + tf[:3, 3]
         self.vis_dict[mesh_name].vertices = o3d.utility.Vector3dVector(tf_vertices)
-    
-    def update_custom_mesh(self, mesh, mesh_name):
+
+    def update_custom_mesh(self, mesh: o3d.geometry.TriangleMesh, mesh_name: str) -> None:
         if mesh_name not in self.vis_dict.keys():
             self.vis_dict[mesh_name] = copy.deepcopy(mesh)
             self.visualizer.add_geometry(self.vis_dict[mesh_name])
@@ -553,22 +613,27 @@ class o3dVisualizer():
             self.vis_dict[mesh_name] = copy.deepcopy(mesh)
             self.visualizer.add_geometry(self.vis_dict[mesh_name])
         self.visualizer.update_geometry(self.vis_dict[mesh_name])
-    
-    def render(self, render_names=None, save_name=None, curr_view_ctrl_info=None):
+
+    def render(
+        self,
+        render_names: Optional[str] = None,
+        save_name: Optional[str] = None,
+        curr_view_ctrl_info: Optional[Dict] = None,
+    ) -> np.ndarray:
         # if self.is_first:
         #     self.is_first = False
         if self.view_ctrl_info is not None and curr_view_ctrl_info is None:
             view_control = self.visualizer.get_view_control()
-            view_control.set_front(self.view_ctrl_info['front'])
-            view_control.set_lookat(self.view_ctrl_info['lookat'])
-            view_control.set_up(self.view_ctrl_info['up'])
-            view_control.set_zoom(self.view_ctrl_info['zoom'])
+            view_control.set_front(self.view_ctrl_info["front"])
+            view_control.set_lookat(self.view_ctrl_info["lookat"])
+            view_control.set_up(self.view_ctrl_info["up"])
+            view_control.set_zoom(self.view_ctrl_info["zoom"])
         elif curr_view_ctrl_info is not None:
             view_control = self.visualizer.get_view_control()
-            view_control.set_front(curr_view_ctrl_info['front'])
-            view_control.set_lookat(curr_view_ctrl_info['lookat'])
-            view_control.set_up(curr_view_ctrl_info['up'])
-            view_control.set_zoom(curr_view_ctrl_info['zoom'])
+            view_control.set_front(curr_view_ctrl_info["front"])
+            view_control.set_lookat(curr_view_ctrl_info["lookat"])
+            view_control.set_up(curr_view_ctrl_info["up"])
+            view_control.set_zoom(curr_view_ctrl_info["zoom"])
         if render_names is None:
             for mesh_name in self.vis_dict.keys():
                 self.visualizer.update_geometry(self.vis_dict[mesh_name])
@@ -581,23 +646,23 @@ class o3dVisualizer():
         self.visualizer.poll_events()
         self.visualizer.update_renderer()
         self.visualizer.run()
-        
+
         img = None
         if self.save_path is not None:
             if save_name is None:
-                save_fn = f'{self.save_path}/{self.internal_clock}.png'
+                save_fn = f"{self.save_path}/{self.internal_clock}.png"
             else:
-                save_fn = f'{self.save_path}/{save_name}.png'
+                save_fn = f"{self.save_path}/{save_name}.png"
             self.visualizer.capture_screen_image(save_fn)
             img = cv2.imread(save_fn)
             self.internal_clock += 1
-        
+
         # add back
         if render_names is not None:
             for mesh_name in self.vis_dict.keys():
                 if mesh_name not in render_names:
                     self.visualizer.add_geometry(self.vis_dict[mesh_name])
-        
+
         return img
 
 def poseInterp(pose0, pose1, steps):
@@ -721,6 +786,78 @@ def test_o3d_vis():
         # curr_view_ctrl_info['zoom'] = (1 + i/100) * view_ctrl_info['zoom']
         o3d_vis.render(curr_view_ctrl_info=curr_view_ctrl_info)
         time.sleep(0.1)
+
+
+def create_arrow(scale: float = 10.0) -> o3d.geometry.TriangleMesh:
+    """
+    Create an arrow in for Open3D
+    """
+    cone_height = scale * 0.2
+    cylinder_height = scale * 0.8
+    cone_radius = scale / 10
+    cylinder_radius = scale / 20
+    mesh_frame = o3d.geometry.TriangleMesh.create_arrow(
+        cone_radius=cone_radius,
+        cone_height=cone_height,
+        cylinder_radius=cylinder_radius,
+        cylinder_height=cylinder_height,
+    )
+    return mesh_frame
+
+
+def get_arrow(
+    origin: np.ndarray,
+    end: Union[np.ndarray, None] = None,
+    vec: Union[np.ndarray, None] = None,
+    color: Union[np.ndarray, None] = None,
+) -> o3d.geometry.TriangleMesh:
+    """
+    Creates an arrow from an origin point to an end point,
+    or create an arrow from a vector vec starting from origin.
+    Args:
+        - end (): End point. [x,y,z]
+        - vec (): Vector. [i,j,k]
+    """
+    scale = 10
+    if end is not None:
+        vec = np.array(end) - np.array(origin)
+    elif vec is not None:
+        vec = np.array(vec)
+    if end is not None or vec is not None:
+        scale = np.sqrt(np.sum(vec**2))
+    mesh = create_arrow(scale)
+    if color is not None:
+        mesh.paint_uniform_color(color)
+    # Create the arrow
+    R = np.eye(3)
+    vec = vec / np.linalg.norm(vec)
+    R[:, 2] = vec
+    x_vec = np.array([-vec[1] - vec[2], vec[0] - vec[2], vec[0] + vec[1]])
+    x_vec = x_vec / np.linalg.norm(x_vec)
+    y_vec = np.cross(vec, x_vec)
+    R[:, 0] = x_vec
+    R[:, 1] = y_vec
+    mesh.rotate(R, center=np.array([0, 0, 0]))
+    mesh.translate(origin)
+    return mesh
+
+
+def test_arrow() -> None:
+    vec = np.array(
+        [
+            [0.1, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+            [-1.0, 0.0, 0.0],
+            [0.0, -1.0, 0.0],
+            [0.0, -0.9, 0.1],
+            [0.0, 0.0, -1.0],
+        ]
+    )
+    coord = o3d.geometry.TriangleMesh.create_coordinate_frame()
+    for v in vec:
+        arrow = get_arrow(origin=np.ones(3), vec=v)
+        o3d.visualization.draw_geometries([arrow, coord])
 
 if __name__ == '__main__':
     test_o3d_vis()
