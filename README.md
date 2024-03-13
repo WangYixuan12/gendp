@@ -78,6 +78,11 @@ python gild/tests/vis_data_2d.py
 You could adjust dataset path and observation keys in `gild/tests/vis_data_2d.py`.
 
 ### Visualize Aggregated 3D Observation
+Similarly, to visualize aggegated 3D observations, use the following command:
+```console
+python gild/tests/vis_aggr_data_3d.py
+```
+This will visualize aggregated point clouds from multiple views, robot states, and actions from the dataset. You could adjust dataset path and observation keys in `gild/tests/vis_aggr_data_3d.py`.
 
 ### Visualize 3D Semantic Fields
 

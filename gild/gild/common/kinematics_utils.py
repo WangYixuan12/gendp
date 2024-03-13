@@ -186,7 +186,8 @@ class KinHelper():
         for link_idx, link_name in enumerate(link_names):
             import copy
             mesh = copy.deepcopy(self.meshes[link_name])
-            mesh.scale(0.001, center=np.array([0, 0, 0]))
+            if 'trossen' in self.robot_name:
+                mesh.scale(0.001, center=np.array([0, 0, 0]))
             tf = link_pose_ls[link_idx] @ offsets_ls[link_idx]
             mesh.transform(tf)
             meshes_ls.append(mesh)

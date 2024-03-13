@@ -608,10 +608,7 @@ class o3dVisualizer:
             self.vis_dict[mesh_name] = copy.deepcopy(mesh)
             self.visualizer.add_geometry(self.vis_dict[mesh_name])
         else:
-            self.visualizer.remove_geometry(self.vis_dict[mesh_name], False)
-            del self.vis_dict[mesh_name]
-            self.vis_dict[mesh_name] = copy.deepcopy(mesh)
-            self.visualizer.add_geometry(self.vis_dict[mesh_name])
+            self.vis_dict[mesh_name].vertices = mesh.vertices
         self.visualizer.update_geometry(self.vis_dict[mesh_name])
 
     def render(
