@@ -153,14 +153,6 @@ def draw_epipolar_lines(F, img0, img1,num=20):
 
     return img0, img1
 
-def gen_color_map(error, clip_max=12.0, clip_min=2.0, cmap_name='viridis'):
-    rectified_error=(error-clip_min)/(clip_max-clip_min)
-    rectified_error[rectified_error<0]=0
-    rectified_error[rectified_error>=1.0]=1.0
-    viridis=cm.get_cmap(cmap_name,256)
-    colors=[viridis(e) for e in rectified_error]
-    return np.asarray(np.asarray(colors)[:,:3]*255,np.uint8)
-
 def scale_float_image(image):
     max_val, min_val = np.max(image), np.min(image)
     image = (image - min_val) / (max_val - min_val) * 255
@@ -409,8 +401,9 @@ def aggr_point_cloud_from_data(
     masks: np.ndarray = None,
     boundaries: Optional[Dict] = None,
     out_o3d: bool = True,
-    #    excluded_pts=None,
-    #    exclude_threshold=0.01,):
+    excluded_pts: Union[np.ndarray,None] = None,
+    exclude_threshold: float = 0.01,
+    exclude_colors: List = [],
     color_fmt: ImgEncoding = ImgEncoding.RGB_UINT8,
     depth_fmt: ImgEncoding = ImgEncoding.DEPTH_FLOAT,
     pose_fmt: ExtriConvention = ExtriConvention.WORLD_IN_CAM,
@@ -442,7 +435,9 @@ def aggr_point_cloud_from_data(
             mask = depth > 0
         else:
             mask = masks[i] & (depth > 0)
-        # mask = np.ones_like(depth, dtype=bool)
+        
+        for exclude_color in exclude_colors:
+            mask = mask & (~color_seg(color[None], exclude_color))[0]
 
         pcd = depth2fgpcd(depth, mask, cam_param)
 
@@ -500,22 +495,22 @@ def aggr_point_cloud_from_data(
     if downsample:
         pcds, pcd_colors = voxel_downsample(pcds, downsample_r, pcd_colors)
 
-    # # post process 3: exclude points from trans_pcd that are too close to excluded_pts
-    # if excluded_pts is not None:
-    #     pcd_torch = torch.from_numpy(pcds).to(device=torch.device('cuda'), dtype=torch.float32) # [N, 3]
-    #     excluded_pts_torch = torch.from_numpy(excluded_pts)
-    #     excluded_pts_torch = excluded_pts_torch.to(device=torch.device('cuda'), dtype=torch.float32) # [M, 3]
+    # post process 3: exclude points from trans_pcd that are too close to excluded_pts
+    if excluded_pts is not None:
+        pcd_torch = torch.from_numpy(pcds).to(device=torch.device('cuda'), dtype=torch.float32) # [N, 3]
+        excluded_pts_torch = torch.from_numpy(excluded_pts)
+        excluded_pts_torch = excluded_pts_torch.to(device=torch.device('cuda'), dtype=torch.float32) # [M, 3]
 
-    #     dists, idx, _ = ball_query(pcd_torch[None],\
-    #                                excluded_pts_torch[None],\
-    #                                 radius=exclude_threshold,\
-    #                                     K=1,\
-    #                                         return_nn=False)
-    #     idx = idx[0, :, 0] # [N]
-    #     min_dist_to_ex_mask = (idx == -1) # [N], True if no point is within exclude_threshold
-    #     min_dist_to_ex_mask = min_dist_to_ex_mask.cpu().numpy()
-    #     pcds = pcds[min_dist_to_ex_mask]
-    #     pcd_colors = pcd_colors[min_dist_to_ex_mask]
+        dists, idx, _ = ball_query(pcd_torch[None],\
+                                   excluded_pts_torch[None],\
+                                    radius=exclude_threshold,\
+                                        K=1,\
+                                            return_nn=False)
+        idx = idx[0, :, 0] # [N]
+        min_dist_to_ex_mask = (idx == -1) # [N], True if no point is within exclude_threshold
+        min_dist_to_ex_mask = min_dist_to_ex_mask.cpu().numpy()
+        pcds = pcds[min_dist_to_ex_mask]
+        pcd_colors = pcd_colors[min_dist_to_ex_mask]
 
     # post process 4: return o3d point cloud if out_o3d is True
     if out_o3d:

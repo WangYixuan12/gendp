@@ -4,9 +4,7 @@
 import numpy as np
 from tqdm import tqdm
 from matplotlib import colormaps
-import open3d as o3d
 from gild.common.data_utils import load_dict_from_hdf5
-from gild.common.rob_mesh_utils import load_mesh, mesh_poses_to_pc
 from gild.common.kinematics_utils import KinHelper
 from d3fields.utils.draw_utils import aggr_point_cloud_from_data, np2o3d, o3dVisualizer, ImgEncoding
 import scipy.spatial.transform as st

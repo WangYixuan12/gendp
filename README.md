@@ -86,6 +86,11 @@ python gild/tests/vis_aggr_data_3d.py
 This will visualize aggregated point clouds from multiple views, robot states, and actions from the dataset. You could adjust dataset path and observation keys in `gild/tests/vis_aggr_data_3d.py`.
 
 ### Visualize 3D Semantic Fields
+Similarly, to visualize 3D semantic fields, use the following command:
+```console
+python gild/tests/vis_semantic_fields.py
+```
+This will visualize 3D semantic fields processed by [D3Fields](https://robopil.github.io/d3fields/), robot states, and actions. You could adjust dataset path and observation keys in `gild/tests/vis_semantic_fields.py`. The explanation of each entries within `shape_meta` can be seen at [Config Explanation](#config-explanation).
 
 ## Train
 
@@ -103,6 +108,8 @@ Please wait at least till 2 epoches to make sure that all pipelines are working 
 
 ### Config Explanation
 ### Adapt to New Task
+- label
+- modify config
 
 ## Infer in Simulator
 
