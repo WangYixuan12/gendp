@@ -9,9 +9,9 @@ General Diffusion Policies - Yixuan Wang's Internship Project
 3. [Download Dataset](#download-dataset)
 4. [Visualize Dataset](#visualize-dataset)
     1. [Visualize 2D Observation](#visualize-2d-observation)
-    2. [Visualize 3D Semantic Fields](#visualize-3d-semantic-fields)
+    2. [Visualize Aggregated 3D Observation](#visualize-aggregated-3d-observation)
+    3. [Visualize 3D Semantic Fields](#visualize-3d-semantic-fields)
 5. [Train](#train)
-    1. [Visualize Semantic Fields](#visualize-semantic-fields)
     2. [Train GILD](#train-gild)
     3. [Config Explanation](#config-explanation)
     4. [Adapt to New Task](#adapt-to-new-task)
@@ -88,7 +88,6 @@ This will visualize aggregated point clouds from multiple views, robot states, a
 
 ## Train
 
-### Visualize Semantic Fields
 ### Train GILD
 To run training, use the following command:
 ```console
