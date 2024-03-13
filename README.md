@@ -6,6 +6,7 @@ General Diffusion Policies - Yixuan Wang's Internship Project
 2. [Generate Dataset](#generate-dataset)
     1. [Generate from Existing Environments](#generate-from-existing-environments)
     2. [Generate from Customized Environments](#generate-from-customized-environments)
+    3. [Generate Large-Scale Data](#generate-large-scale-data)
 3. [Download Dataset](#download-dataset)
 4. [Visualize Dataset](#visualize-dataset)
     1. [Visualize 2D Observation](#visualize-2d-observation)
