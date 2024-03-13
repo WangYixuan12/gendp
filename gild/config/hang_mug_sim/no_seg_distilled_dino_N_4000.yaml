@@ -113,7 +113,7 @@ policy:
           - table
           query_thresholds:
           - 0.3
-          N_per_inst: 400
+          N_gripper: 400
           boundaries:
             x_lower: -0.35
             x_upper: 0.35
@@ -151,7 +151,7 @@ shape_meta:
         - table
         query_thresholds:
         - 0.3
-        N_per_inst: 400
+        N_gripper: 400
         boundaries:
           x_lower: -0.35
           x_upper: 0.35
@@ -203,7 +203,7 @@ task:
             - table
             query_thresholds:
             - 0.3
-            N_per_inst: 400
+            N_gripper: 400
             boundaries:
               x_lower: -0.35
               x_upper: 0.35
@@ -280,7 +280,7 @@ task:
             - table
             query_thresholds:
             - 0.3
-            N_per_inst: 400
+            N_gripper: 400
             boundaries:
               x_lower: -0.35
               x_upper: 0.35
@@ -321,7 +321,7 @@ task:
           - table
           query_thresholds:
           - 0.3
-          N_per_inst: 400
+          N_gripper: 400
           boundaries:
             x_lower: -0.35
             x_upper: 0.35

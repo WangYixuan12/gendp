@@ -113,7 +113,7 @@ policy:
           - pad
           query_thresholds:
           - 0.3
-          N_per_inst: 100
+          N_gripper: 100
           boundaries:
             x_lower: -0.32
             x_upper: 0.10
@@ -150,7 +150,7 @@ shape_meta:
         - pad
         query_thresholds:
         - 0.3
-        N_per_inst: 100
+        N_gripper: 100
         boundaries:
           x_lower: -0.32
           x_upper: 0.10
@@ -202,7 +202,7 @@ task:
             - pad
             query_thresholds:
             - 0.3
-            N_per_inst: 100
+            N_gripper: 100
             boundaries:
               x_lower: -0.32
               x_upper: 0.10
@@ -243,7 +243,7 @@ task:
           - pad
           query_thresholds:
           - 0.3
-          N_per_inst: 100
+          N_gripper: 100
           boundaries:
             x_lower: -0.32
             x_upper: 0.10

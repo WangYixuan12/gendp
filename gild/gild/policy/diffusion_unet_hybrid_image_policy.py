@@ -128,7 +128,7 @@ class DiffusionUnetHybridImagePolicy(BaseImagePolicy):
         # update arg for compositional
         # when using seg, must be compositional
         if 'd3fields' in shape_meta['obs']:
-            use_seg = shape_meta['obs']['d3fields']['info']['use_seg']
+            use_seg = False
             if use_seg:
                 assert compositional
             else:
@@ -148,7 +148,7 @@ class DiffusionUnetHybridImagePolicy(BaseImagePolicy):
         
         # update arg for n_per_obj
         if 'd3fields' in shape_meta['obs']:
-            encoder_kwargs['spatial']["core_kwargs"]["n_per_obj"] = shape_meta['obs']['d3fields']['info']['N_per_inst']
+            encoder_kwargs['spatial']["core_kwargs"]["n_per_obj"] = shape_meta['obs']['d3fields']['info']['N_gripper']
         
         encoder = ObservationGroupEncoder(
             observation_group_shapes=observation_group_shapes,

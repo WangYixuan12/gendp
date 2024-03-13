@@ -155,14 +155,14 @@ def d3fields_proc(fusion, shape_meta, color_seq, depth_seq, extri_seq, intri_seq
     # offsets: (list) list of offsets
     # finger_poses: (dict) dict of finger poses, mapping from finger name to (T, 6)
     # expected_labels: (list) list of expected labels
-    query_texts = shape_meta['info']['query_texts']
-    query_thresholds = shape_meta['info']['query_thresholds']
+    query_texts = []
+    query_thresholds = []
     boundaries = shape_meta['info']['boundaries']
-    use_seg = shape_meta['info']['use_seg'] if 'use_seg' in shape_meta['info'] else True
-    use_dino = shape_meta['info']['use_dino'] if 'use_dino' in shape_meta['info'] else False
+    use_seg = False
+    use_dino = False
     distill_dino = shape_meta['info']['distill_dino'] if 'distill_dino' in shape_meta['info'] else False
     distill_obj = shape_meta['info']['distill_obj'] if 'distill_obj' in shape_meta['info'] else False
-    N_per_inst = shape_meta['info']['N_per_inst']
+    N_gripper = shape_meta['info']['N_gripper']
     N_total = shape_meta['shape'][1]
     max_pts_num = shape_meta['shape'][1]
     
@@ -208,11 +208,11 @@ def d3fields_proc(fusion, shape_meta, color_seq, depth_seq, extri_seq, intri_seq
         if 'panda' in teleop_robot.robot_name:
             finger_names = ['panda_leftfinger', 'panda_rightfinger', 'panda_hand']
             dense_num_pts = [50, 50, 400]
-            sparse_num_pts = [int(0.2 * N_per_inst), int(0.2 * N_per_inst), int(0.6 * N_per_inst)]
+            sparse_num_pts = [int(0.2 * N_gripper), int(0.2 * N_gripper), int(0.6 * N_gripper)]
         elif 'trossen_vx300s' in teleop_robot.robot_name:
             finger_names = ['vx300s/left_finger_link', 'vx300s/right_finger_link']
             dense_num_pts = [250, 250]
-            sparse_num_pts = [int(0.5 * N_per_inst), int(0.5 * N_per_inst)]
+            sparse_num_pts = [int(0.5 * N_gripper), int(0.5 * N_gripper)]
         else:
             raise RuntimeError('unsupported')
 
@@ -242,7 +242,7 @@ def d3fields_proc(fusion, shape_meta, color_seq, depth_seq, extri_seq, intri_seq
             ee_pcd = teleop_robot.compute_robot_pcd(curr_qpos[qpos_dim*rob_i:qpos_dim*(rob_i+1)], finger_names, sparse_num_pts, pcd_name=f'ee_pcd_{rob_i}')
             robot_pcd = teleop_robot.compute_robot_pcd(curr_qpos[qpos_dim*rob_i:qpos_dim*(rob_i+1)], num_pts=[1000 for _ in range(len(teleop_robot.meshes.keys()))], pcd_name=f'robot_pcd_{rob_i}')
             if tool_name is not None:
-                tool_pcd = teleop_robot.compute_tool_pcd(curr_qpos[qpos_dim*rob_i:qpos_dim*(rob_i+1)], tool_name, N_per_inst, pcd_name=f'tool_pcd_{rob_i}')
+                tool_pcd = teleop_robot.compute_tool_pcd(curr_qpos[qpos_dim*rob_i:qpos_dim*(rob_i+1)], tool_name, N_gripper, pcd_name=f'tool_pcd_{rob_i}')
         
             # transform robot pcd to world frame    
             robot_base_pose_in_world = robot_base_pose_in_world_seq[t, rob_i] if robot_base_pose_in_world_seq is not None else None
@@ -276,7 +276,7 @@ def d3fields_proc(fusion, shape_meta, color_seq, depth_seq, extri_seq, intri_seq
         
         if use_seg:
             obj_pcd = fusion.extract_masked_pcd(list(range(1, fusion.get_inst_num())), boundaries=boundaries)
-            src_feat_list, src_pts_list, _ = fusion.select_features_from_pcd(obj_pcd, N_per_inst, per_instance=True, use_seg=use_seg, use_dino=(use_dino or distill_dino))
+            src_feat_list, src_pts_list, _ = fusion.select_features_from_pcd(obj_pcd, N_gripper, per_instance=True, use_seg=use_seg, use_dino=(use_dino or distill_dino))
         else:
             obj_pcd = fusion.extract_pcd_in_box(boundaries=boundaries, downsample=True, downsample_r=0.002, excluded_pts=robot_pcd, exclude_threshold=exclude_threshold, exclude_colors=exclude_colors)
             src_feat_list, src_pts_list, _ = fusion.select_features_from_pcd(obj_pcd, N_total - ee_pcd.shape[0], per_instance=True, use_seg=use_seg, use_dino=(use_dino or distill_dino))
@@ -316,7 +316,7 @@ def d3fields_proc(fusion, shape_meta, color_seq, depth_seq, extri_seq, intri_seq
         
         # decomp as part
         new_aggr_src_pts = []
-        N_per_part = N_per_inst // aggr_src_pts.shape[1]
+        N_per_part = N_gripper // aggr_src_pts.shape[1]
         for i in range(aggr_src_pts.shape[0] // N_per_part):
             # only decomp the first instance
             if i == 0:
@@ -344,7 +344,7 @@ def d3fields_proc_for_vis(fusion, shape_meta, color_seq, depth_seq, extri_seq, i
     # finger_poses: (dict) dict of finger poses, mapping from finger name to (T, 6)
     # expected_labels: (list) list of expected labels
     boundaries = shape_meta['info']['boundaries']
-    use_dino = shape_meta['info']['use_dino'] if 'use_dino' in shape_meta['info'] else False
+    use_dino = False
     distill_dino = shape_meta['info']['distill_dino'] if 'distill_dino' in shape_meta['info'] else False
     distill_obj = shape_meta['info']['distill_obj'] if 'distill_obj' in shape_meta['info'] else False
     N_total = shape_meta['shape'][1]
@@ -468,7 +468,7 @@ def d3fields_proc_for_tsne(fusion, shape_meta, color_seq, depth_seq, extri_seq, 
     # finger_poses: (dict) dict of finger poses, mapping from finger name to (T, 6)
     # expected_labels: (list) list of expected labels
     boundaries = shape_meta['info']['boundaries']
-    use_dino = shape_meta['info']['use_dino'] if 'use_dino' in shape_meta['info'] else False
+    use_dino = False
     distill_dino = shape_meta['info']['distill_dino'] if 'distill_dino' in shape_meta['info'] else False
     distill_obj = shape_meta['info']['distill_obj'] if 'distill_obj' in shape_meta['info'] else False
     N_total = shape_meta['shape'][1]

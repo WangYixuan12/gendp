@@ -86,7 +86,6 @@ class SequenceSampler:
         key_first_k=dict(),
         episode_mask: Optional[np.ndarray]=None,
         dataset_dir: Optional[str]=None,
-        d3fields_feats_type: Optional[str]='no_feats',
         shape_meta: Optional[dict]=None,
         ):
         """
@@ -121,7 +120,6 @@ class SequenceSampler:
         self.key_first_k = key_first_k
         self.episode_ends = episode_ends
         self.dataset_dir = dataset_dir
-        self.d3fields_feats_type = d3fields_feats_type
         self.shape_meta = shape_meta
     
     def __len__(self):
@@ -140,25 +138,16 @@ class SequenceSampler:
         result = dict()
         is_joint = 'key' in self.shape_meta['action'] and self.shape_meta['action']['key'] == 'joint_action'
         if 'd3fields' in self.shape_meta['obs']:
-            use_seg = self.shape_meta['obs']['d3fields']['info']['use_seg'] if 'use_seg' in self.shape_meta['obs']['d3fields']['info'] else True
+            use_seg = False
             feats_prefix = '' if use_seg else '_no_seg'
             if is_joint:
                 feats_prefix += '_joint'
         
-        if self.d3fields_feats_type == 'full':
-            feats_folder = f'feats{feats_prefix}'
-        elif self.d3fields_feats_type == 'pca':
-            feats_folder = f'pca_feats{feats_prefix}'
         for key in self.keys:
             input_arr = self.replay_buffer[key]
             # performance optimization, avoid small allocation if possible
             if key not in self.key_first_k:
                 sample = input_arr[buffer_start_idx:buffer_end_idx]
-                if key == 'd3fields' and (not self.d3fields_feats_type == 'no_feats'):
-                    epi_idx, epi_offset = self.idx_to_epi_idx(idx)
-                    with h5py.File(os.path.join(self.dataset_dir, feats_folder, f'episode_{epi_idx}.hdf5'), 'r') as f:
-                        feats = f['feats'][epi_offset:epi_offset+sample.shape[0]]
-                    sample = np.concatenate([sample, feats], axis=-1)
             else:
                 # performance optimization, only load used obs steps
                 n_data = buffer_end_idx - buffer_start_idx
@@ -168,20 +157,6 @@ class SequenceSampler:
                 sample = np.full((n_data,) + input_arr.shape[1:], 
                     fill_value=np.nan, dtype=input_arr.dtype)
                 sample[:k_data] = input_arr[buffer_start_idx:buffer_start_idx+k_data]
-                if key == 'd3fields' and (not self.d3fields_feats_type == 'no_feats'):
-                    epi_idx, epi_offset = self.idx_to_epi_idx(idx)
-                    with h5py.File(os.path.join(self.dataset_dir, feats_folder, f'episode_{epi_idx}.hdf5'), 'r') as f:
-                        feats = f['feats'][epi_offset:epi_offset+k_data]
-                        feats_pad = np.full((n_data,) + feats.shape[1:], 
-                            fill_value=np.nan, dtype=feats.dtype)
-                        if feats.shape[0] < k_data:
-                            raise ValueError(f'feats.shape[0] < k_data: {feats.shape[0]} < {k_data}')
-                        feats_pad[:k_data] = feats
-                    if feats_pad.shape[1] < sample.shape[1]:
-                        feats_pad = np.concatenate([feats_pad, np.zeros((feats_pad.shape[0], sample.shape[1]-feats_pad.shape[1], feats_pad.shape[-1]))], axis=1)
-                    elif feats_pad.shape[1] > sample.shape[1]:
-                        feats_pad = feats_pad[:, :sample.shape[1]]
-                    sample = np.concatenate([sample, feats_pad], axis=-1)
             if key == 'd3fields':
                 n_pts = self.shape_meta['obs']['d3fields']['shape'][1]
                 sample = sample[:, :n_pts]

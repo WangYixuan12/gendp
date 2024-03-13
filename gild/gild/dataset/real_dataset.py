@@ -158,9 +158,9 @@ def _convert_real_to_dp_replay(store, shape_meta, dataset_dir, rotation_transfor
                 
                 # construct inputs for d3fields processing
                 view_keys = shape_meta['obs'][key]['info']['view_keys']
-                use_dino = shape_meta['obs'][key]['info']['use_dino'] if 'use_dino' in shape_meta['obs'][key]['info'] else False
+                use_dino = False
                 distill_dino = shape_meta['obs'][key]['info']['distill_dino'] if 'distill_dino' in shape_meta['obs'][key]['info'] else False
-                use_seg = shape_meta['obs'][key]['info']['use_seg'] if 'use_seg' in shape_meta['obs'][key]['info'] else True
+                use_seg = False
                 tool_names = [None, None]
                 if 'right_tool' in shape_meta['obs'][key]['info']:
                     tool_names[0] = shape_meta['obs'][key]['info']['right_tool']
@@ -363,16 +363,14 @@ class RealDataset(BaseImageDataset):
         replay_buffer = None
         fusion = None
         cache_info_str = ''
-        d3fields_feats_type = None
         for key, attr in shape_meta['obs'].items():
             if ('type' in attr) and (attr['type'] == 'depth'):
                 cache_info_str += '_rgbd'
                 break
         if 'd3fields' in shape_meta['obs']:
-            use_seg = shape_meta['obs']['d3fields']['info']['use_seg']
-            use_dino = shape_meta['obs']['d3fields']['info']['use_dino']
+            use_seg = False
+            use_dino = False
             distill_dino = shape_meta['obs']['d3fields']['info']['distill_dino'] if 'distill_dino' in shape_meta['obs']['d3fields']['info'] else False
-            d3fields_feats_type = shape_meta['obs']['d3fields']['info']['feats_type']
             if use_seg:
                 cache_info_str += '_seg'
             else:
@@ -508,7 +506,6 @@ class RealDataset(BaseImageDataset):
             episode_mask=train_mask,
             dataset_dir=dataset_dir,
             key_first_k=key_first_k,
-            d3fields_feats_type=d3fields_feats_type,
             shape_meta=shape_meta,)
         
         self.shape_meta = shape_meta
@@ -523,7 +520,6 @@ class RealDataset(BaseImageDataset):
         self.n_obs_steps = n_obs_steps
         self.use_legacy_normalizer = use_legacy_normalizer
         self.dataset_dir = dataset_dir
-        self.d3fields_feats_type = d3fields_feats_type
         self.key_first_k = key_first_k
 
     def get_validation_dataset(self):
@@ -536,7 +532,6 @@ class RealDataset(BaseImageDataset):
             episode_mask=~self.train_mask,
             dataset_dir=self.dataset_dir,
             key_first_k=self.key_first_k,
-            d3fields_feats_type=self.d3fields_feats_type,
             shape_meta=self.shape_meta,
             )
         val_set.train_mask = ~self.train_mask
@@ -587,10 +582,6 @@ class RealDataset(BaseImageDataset):
                 # compute normalizer for feats of top 10 demos
                 feats = []
                 for demo_i in range(1):
-                    if self.shape_meta['obs'][key]['info']['use_seg']:
-                        feats_prefix = ''
-                    else:
-                        feats_prefix = '_no_seg'
                     if is_joint:
                         feats_prefix += '_joint'
                     if os.path.exists(os.path.join(self.dataset_dir, f'feats{feats_prefix}', f'episode_{demo_i}.hdf5')):
@@ -651,57 +642,6 @@ class RealDataset(BaseImageDataset):
         sample = self.sampler.sample_sequence(idx)
         data = self._sample_to_data(sample)
         return data
-
-
-def test():
-    import os
-    # zarr_path = os.path.expanduser('/media/yixuan_2T/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/mixed_demo_100')
-    # zarr_path = os.path.expanduser('/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_cola_demo_100')
-    # zarr_path = os.path.expanduser('/media/yixuan_2T/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_cola_demo_1')
-    # zarr_path = os.path.expanduser('/media/yixuan_2T/diffusion_policy/data/sapien_env/teleop_data/hang_mug/nescafe_mug_demo_100_steps_350')
-    # zarr_path = os.path.expanduser('/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/hang_mug/nescafe_mug_demo_1')
-    # zarr_path = os.path.expanduser('/media/yixuan_2T/diffusion_policy/data/sapien_env/teleop_data/mug_collect/cola_demo_100_with_fingers')
-    zarr_path = os.path.expanduser('/media/yixuan_2T/diffusion_policy/data/sapien_env/teleop_data/hang_mug/nescafe_mug_demo_1_closer_views_central_obj')
-    shape_meta = {
-        'action': {
-            'shape': (10,),
-            'type': 'low_dim',
-        },
-        'obs': {
-            'd3fields': {
-                'shape': (3+1024, 300),
-                'type': 'spatial',
-                'info': {
-                    'view_keys': ['left_bottom_view', 'right_bottom_view', 'left_top_view', 'right_top_view'],
-                    # 'query_texts': ['soda', 'pad', 'table'],
-                    'query_texts': ['mug', 'rack', 'table'],
-                    'query_thresholds': [0.3],
-                    'N_per_inst': 100,
-                    'boundaries': {
-                        'x_lower': -0.35,
-                        'x_upper': 0.35,
-                        'y_lower': -0.5,
-                        'y_upper': 0.5,
-                        'z_lower': -0.02,
-                        'z_upper': 0.5,
-                    },
-                    'resize_ratio': 0.5,
-                }
-            },
-            'ee_pos': {
-                'shape': (7,)
-            }
-        },
-    }
-    dataset = RealDataset(shape_meta, zarr_path, horizon=16, use_cache=True)
-    print(dataset[0])
-    print(len(dataset))
-
-    # from matplotlib import pyplot as plt
-    # normalizer = dataset.get_normalizer()
-    # nactions = normalizer['action'].normalize(dataset.replay_buffer['action'])
-    # diff = np.diff(nactions, axis=0)
-    # dists = np.linalg.norm(np.diff(nactions, axis=0), axis=-1)
 
 def update_ee_pose():
     # create on 12/17/2023, only for one-time use
@@ -806,5 +746,4 @@ def update_ee_pose():
         modify_hdf5_from_dict(epi_fn, new_epi_data)
 
 if __name__ == '__main__':
-    # test()
     update_ee_pose()

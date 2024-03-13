@@ -229,7 +229,7 @@ for i in range(len(dataset)):
     
     # for key in obs_dict.keys():
     #     print(f"grad: {obs_dict[key].grad}")
-    # obs_dict['d3fields'].grad[0, :, :, -cfg.shape_meta.obs.d3fields.info.N_per_inst:] = 0
+    # obs_dict['d3fields'].grad[0, :, :, -cfg.shape_meta.obs.d3fields.info.N_gripper:] = 0
     
     activations_list = [a.cpu().data.numpy()
                         for a in activations_and_grads.activations] # [B, 1024, N]

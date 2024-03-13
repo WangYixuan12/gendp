@@ -24,17 +24,11 @@ shape_meta = {
     'shape': [6, 4000],
     'type': 'spatial',
     'info': {
-        'feats_type': 'no_feats',
         'reference_frame': 'world',
-        'use_seg': False,
-        'use_dino': False,
         'distill_dino': True,
         'distill_obj': 'mug',
-        'rob_pcd': True,
         'view_keys': ['left_bottom_view', 'right_bottom_view', 'left_top_view', 'right_top_view'],
-        'query_texts': ['soda', 'pad', 'table'],
-        'query_thresholds': [0.3],
-        'N_per_inst': 400,
+        'N_gripper': 400,
         'boundaries': {
             'x_lower': -0.35,
             'x_upper': 0.35,

@@ -143,7 +143,7 @@ for i in range(len(dataset)):
         mse.backward()
         # for key in obs_dict.keys():
         #     print(f"grad: {obs_dict[key].grad}")
-        obs_dict['d3fields'].grad[0, :, :, -cfg.shape_meta.obs.d3fields.info.N_per_inst:] = 0
+        obs_dict['d3fields'].grad[0, :, :, -cfg.shape_meta.obs.d3fields.info.N_gripper:] = 0
         pts_grad_ls, pts_feats_ls = vis_pcd_grad(obs_dict['d3fields'], obs_dict['d3fields'].grad)
     else:
         pts_grad_ls, pts_feats_ls = vis_pcd_grad(obs_dict['d3fields'], None)

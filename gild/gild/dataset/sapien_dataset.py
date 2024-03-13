@@ -158,9 +158,9 @@ def _convert_sapein_to_dp_replay(store, shape_meta, dataset_dir, rotation_transf
 
                 # construct inputs for d3fields processing
                 view_keys = shape_meta['obs'][key]['info']['view_keys']
-                use_dino = shape_meta['obs'][key]['info']['use_dino'] if 'use_dino' in shape_meta['obs'][key]['info'] else False
+                use_dino = False
                 distill_dino = shape_meta['obs'][key]['info']['distill_dino'] if 'distill_dino' in shape_meta['obs'][key]['info'] else False
-                use_seg = shape_meta['obs'][key]['info']['use_seg'] if 'use_seg' in shape_meta['obs'][key]['info'] else True
+                use_seg = False
                 is_joint = ('key' in shape_meta['action'].keys()) and (shape_meta['action']['key'] == 'joint_action')
                 color_seq = np.stack([file['observations']['images'][f'{k}_color'][()] for k in view_keys], axis=1) # (T, V, H ,W, C)
                 depth_seq = np.stack([file['observations']['images'][f'{k}_depth'][()] for k in view_keys], axis=1) / 1000. # (T, V, H ,W)
@@ -357,16 +357,14 @@ class SapienDataset(BaseImageDataset):
         replay_buffer = None
         fusion = None
         cache_info_str = ''
-        d3fields_feats_type = None
         for key, attr in shape_meta['obs'].items():
             if ('type' in attr) and (attr['type'] == 'depth'):
                 cache_info_str += '_rgbd'
                 break
         if 'd3fields' in shape_meta['obs']:
-            use_seg = shape_meta['obs']['d3fields']['info']['use_seg']
-            use_dino = shape_meta['obs']['d3fields']['info']['use_dino']
+            use_seg = False
+            use_dino = False
             distill_dino = shape_meta['obs']['d3fields']['info']['distill_dino'] if 'distill_dino' in shape_meta['obs']['d3fields']['info'] else False
-            d3fields_feats_type = shape_meta['obs']['d3fields']['info']['feats_type']
             if use_seg:
                 cache_info_str += '_no_seg'
             else:
@@ -499,7 +497,6 @@ class SapienDataset(BaseImageDataset):
             episode_mask=train_mask,
             dataset_dir=dataset_dir,
             key_first_k=key_first_k,
-            d3fields_feats_type=d3fields_feats_type,
             shape_meta=shape_meta,)
         
         self.shape_meta = shape_meta
@@ -514,7 +511,6 @@ class SapienDataset(BaseImageDataset):
         self.n_obs_steps = n_obs_steps
         self.use_legacy_normalizer = use_legacy_normalizer
         self.dataset_dir = dataset_dir
-        self.d3fields_feats_type = d3fields_feats_type
         self.key_first_k = key_first_k
 
     def get_validation_dataset(self):
@@ -527,7 +523,6 @@ class SapienDataset(BaseImageDataset):
             episode_mask=~self.train_mask,
             dataset_dir=self.dataset_dir,
             key_first_k=self.key_first_k,
-            d3fields_feats_type=self.d3fields_feats_type,
             shape_meta=self.shape_meta,
             )
         val_set.train_mask = ~self.train_mask
@@ -578,10 +573,6 @@ class SapienDataset(BaseImageDataset):
                 # compute normalizer for feats of top 10 demos
                 feats = []
                 for demo_i in range(1):
-                    if self.shape_meta['obs'][key]['info']['use_seg']:
-                        feats_prefix = ''
-                    else:
-                        feats_prefix = '_no_seg'
                     if is_joint:
                         feats_prefix += '_joint'
                     if os.path.exists(os.path.join(self.dataset_dir, f'feats{feats_prefix}', f'episode_{demo_i}.hdf5')):
@@ -744,60 +735,3 @@ def modify_saved_feats(src_path):
 
 if __name__ == '__main__':
     test()
-    
-    # shape_meta = {
-    #     'action': {
-    #         'shape': (10,),
-    #         'type': 'low_dim',
-    #     },
-    #     'obs': {
-    #         # 'front_view_color': {
-    #         #     'shape': (3, 60, 80),
-    #         #     'type': 'rgb',
-    #         # },
-    #         # 'right_view_color': {
-    #         #     'shape': (3, 60, 80),
-    #         #     'type': 'rgb',
-    #         # },
-    #         'd3fields': {
-    #             'shape': (3+1024, 200),
-    #             'type': 'spatial',
-    #             'info': {
-    #                 'view_keys': ['left_bottom_view', 'right_bottom_view', 'left_top_view', 'right_top_view'],
-    #                 'query_texts': ['soda', 'pad', 'table'],
-    #                 'query_thresholds': [0.3],
-    #                 'N_per_inst': 100,
-    #                 'boundaries': {
-    #                     'x_lower': -0.35,
-    #                     'x_upper': 0.35,
-    #                     'y_lower': -0.5,
-    #                     'y_upper': 0.5,
-    #                     'z_lower': -0.02,
-    #                     'z_upper': 0.4,
-    #                 },
-    #                 'resize_ratio': 0.5,
-    #             }
-    #         },
-    #         'ee_pos': {
-    #             'shape': (7,)
-    #         }
-    #     },
-    # }
-    # update_zarr_with_new_shape_meta(src_path='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_cola_demo_100/cache.zarr.zip',
-    #                                 tgt_path='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_cola_demo_100/cache_new.zarr.zip',
-    #                                 dataset_dir='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_cola_demo_100',
-    #                                 new_shape_meta=shape_meta)
-    
-    # rm_dino_feats(src_path='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_mixed_demo_100/cache.zarr.zip',
-    #               tgt_path='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_mixed_demo_100/cache_no_feats.zarr.zip')
-    # rm_and_extract_dino_feats(src_path='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_mixed_demo_100/cache.zarr.zip',
-    #                           tgt_path='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_mixed_demo_100/cache_no_feats_new.zarr.zip')
-    # rm_obs_keys(src_path='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_mixed_demo_100/cache_no_feats.zarr.zip',
-    #             tgt_path='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_mixed_demo_100/cache_no_feats_rm.zarr.zip',
-    #             keys=['front_view_color', 'right_view_color'])
-    # pca_dino_feats(src_path='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/middle_view_demo_100/cache_pca_feats.zarr.zip',
-    #                tgt_path='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/middle_view_demo_100/cache_pca_feats.zarr.zip',
-    #                pca_path='pca_model/can.pkl')
-    # cut_d3fields(src_path='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_cola_demo_100/cache.zarr.zip',
-    #               tgt_path='/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/pick_place_soda/small_rand_cola_demo_100/cache_new.zarr.zip')
-    # modify_saved_feats('/data/yixuan22/diffusion_policy/data/sapien_env/teleop_data/hang_mug/nescafe_mug_demo_100/feats/episode_29.hdf5')

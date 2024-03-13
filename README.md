@@ -24,11 +24,9 @@ General Diffusion Policies - Yixuan Wang's Internship Project
     4. [Infer in Real World](#infer-in-real-world)
 
 ## TODO
-- [ ] Training
+- [ ] Train
 - [ ] Sim inference
-- [ ] Data visualization
-- [ ] Select your DINOv2 features
-- [ ] Real inference
+- [ ] Real deployment
 - [ ] Clean up robomimic database
 
 ## Install
@@ -95,14 +93,16 @@ This will visualize 3D semantic fields processed by [D3Fields](https://robopil.g
 ## Train
 
 ### Train GILD
-To run training, use the following command:
+To run training, we first set the environment variables.
 ```console
-# some env variables for the training to run
 export OMP_NUM_THREADS=1
 export TOKENIZERS_PARALLELISM=true
 export MKL_NUM_THREADS=1
+```
+Then, we run the following command:
+```console
 cd [PATH_TO_REPO]/gild
-python train.py --config-dir=config --config-name=sapien_pick_place_can_d3fields_test.yaml training.seed=42 training.device=cuda training.device_id=0 data_root=[PATH_TO_DATA]
+python train.py --config-dir=config --config-name=[TASK_NAME]/sapien_pick_place_can_d3fields_test.yaml training.seed=42 training.device=cuda training.device_id=0 data_root=[PATH_TO_DATA]
 ```
 Please wait at least till 2 epoches to make sure that all pipelines are working properly.
 

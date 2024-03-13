@@ -66,7 +66,7 @@ def get_real_obs_dict(
 
             # construct inputs for d3fields processing
             view_keys = attr['info']['view_keys']
-            use_dino = attr['info']['use_dino'] if 'use_dino' in attr['info'] else False
+            use_dino = False
             distill_dino = attr['info']['distill_dino'] if 'distill_dino' in attr['info'] else False
             tool_names = [None, None]
             if 'right_tool' in attr['info']:

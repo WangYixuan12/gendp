@@ -108,7 +108,7 @@ policy:
           - box
           query_thresholds:
           - 0.3
-          N_per_inst: 1000
+          N_gripper: 1000
           boundaries:
             x_lower: -0.36
             x_upper: 0.10
@@ -140,7 +140,7 @@ shape_meta:
         - box
         query_thresholds:
         - 0.3
-        N_per_inst: 1000
+        N_gripper: 1000
         boundaries:
           x_lower: -0.36
           x_upper: 0.10
@@ -186,7 +186,7 @@ task:
             - box
             query_thresholds:
             - 0.3
-            N_per_inst: 1000
+            N_gripper: 1000
             boundaries:
               x_lower: -0.36
               x_upper: 0.10
@@ -222,7 +222,7 @@ task:
           - box
           query_thresholds:
           - 0.3
-          N_per_inst: 1000
+          N_gripper: 1000
           boundaries:
             x_lower: -0.36
             x_upper: 0.10
