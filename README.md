@@ -14,8 +14,8 @@ General Diffusion Policies - Yixuan Wang's Internship Project
     3. [Visualize 3D Semantic Fields](#visualize-3d-semantic-fields)
 5. [Train](#train)
     1. [Train GILD](#train-gild)
-    2. [<span style="color:red">Config Explanation</span>](#config-explanation)
-6. [<span style="color:red">Infer in Simulator</span>](#infer-in-simulator)
+    2. [Config Explanation](#config-explanation)
+6. [Infer in Simulator](#infer-in-simulator)
 7. [<span style="color:red">Deploy in Real World</span>](#deploy-in-real-world)
     1. [<span style="color:red">Set Up Robot</span>](#set-up-robot)
     2. [<span style="color:red">Collect Demonstration</span>](#collect-demonstration)
@@ -23,7 +23,7 @@ General Diffusion Policies - Yixuan Wang's Internship Project
     4. [<span style="color:red">Infer in Real World</span>](#infer-in-real-world)
     3. [<span style="color:red">Adapt to New Task</span>](#adapt-to-new-task)
 
-## Install
+## :hammer: Install
 We recommend [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) instead of the standard anaconda distribution for faster installation: 
 ```console
 mamba env create -f conda_environment.yaml
@@ -102,14 +102,54 @@ For example, to train on `small_data` in my local machine, I run the following c
 ```console
 python train.py --config-dir=config/small_data --config-name=distilled_dino_N_4000.yaml training.seed=42 training.device=cuda training.device_id=0 data_root=/home/yixuan/gild
 ```
-Please wait at least till 2 epoches to make sure that all pipelines are working properly.
+Please wait at least till 2 epoches to make sure that all pipelines are working properly. For `hang_mug_sim` task and `pencil_insertion_sim` task, you could simply replace [TASK_NAME] with `hang_mug_sim` and `pencil_insertion_sim` respectively.
 
 ### Config Explanation
-- n_test / n_train
-- _every
-- max_steps
+There are several critical entries within the config file. Here are some explanations:
+```yaml
+shape_meta: shape_meta contains the policy input and output information.
+    action: output information
+        shape: action dimension. In our work, it is 10 = (3 for translation, 6 for 6d rotation*, 1 for gripper)
+        key: [optional] key for the action in the dataset. It could be 'eef_action' or 'joint_action'. Default is 'eef_action'.
+    obs: input information
+        ... # other input modalities if needed
+        d3fields: 3D semantic fields
+            shape: shape of the 3D semantic fields, i.e. (num_channel, num_points)
+            type: type of inputs. It should be 'spatial' for point cloud inputs
+            info: information of the 3D semantic fields.
+                reference_frame: frame of input semantic fields. It should be 'world' or 'robot'
+                distill_dino: whether to add semantic information to the point cloud
+                distill_obj: the name for reference features, which are saved in `d3fields_dev/d3fields/sel_feats/[DISTILL_OBJ].npy`.
+                view_keys: viewpoint keys for the semantic fields.
+                N_gripper: number of points sampled from the gripper.
+                boundaries: boundaries for the workspace.
+                resize_ratio: our pipeline will resize images by this ratio to save time and memory.
+task:
+    env_runner: the configuration for the evaluation environment during the training
+        max_steps: maximum steps for each episode, which should be adjusted according to the task
+        n_test: number of testing environments
+        n_test_vis: number of testing environments that will be visualized on wandb
+        n_train: number of training environments
+        n_train_vis: number of training environments that will be visualized on wandb
+        train_obj_ls: list of objects that appear in the training environments
+        test_obj_ls: list of objects that appear in the testing environments
+training:
+    checkpoint_every: the frequency of saving checkpoints
+    rollout_every: the frequency of rolling out the policy in the env_runner
+```
 
 ## Infer in Simulator
+To run an existing policy in the simulator, use the following command:
+```console
+cd [PATH_TO_REPO]/gild
+python eval.py --checkpoint [PATH_TO_CHECKPOINT] --output_dir [OUTPUT_DIR] --n_test [NUM_TEST] --n_train [NUM_TRAIN] --n_test_vis [NUM_TEST_VIS] --n_train_vis [NUM_TRAIN_VIS] --test_obj_ls [OBJ_NAME_1] --test_obj_ls [OBJ_NAME_2] --data_root [PATH_TO_DATA]
+```
+To download the existing checkpoints, you could run the following commands.
+```console
+bash scripts/download_ckpts.sh
+```
+You can also download them from [UIUC Box](https://uofi.box.com) or [Google Drive](https://drive.google.com) and unzip them if the scipt fails.
+
 
 ## Deploy in Real World
 ### Set Up Robot
