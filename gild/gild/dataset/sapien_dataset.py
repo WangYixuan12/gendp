@@ -89,6 +89,7 @@ def _convert_sapein_to_dp_replay(store, shape_meta, dataset_dir, rotation_transf
 
     episodes_paths = glob.glob(os.path.join(dataset_dir, 'episode_*.hdf5'))
     episodes_stem_name = [Path(path).stem for path in episodes_paths]
+    assert len(episodes_stem_name) > 0, f'No episodes found in {dataset_dir}'
     episodes_idx = [int(stem_name.split('_')[-1]) for stem_name in episodes_stem_name]
     episodes_idx = sorted(episodes_idx)
     kin_helper = KinHelper(robot_name=robot_name)

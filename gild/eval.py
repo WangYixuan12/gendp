@@ -1,14 +1,7 @@
-"""
-Usage:
-python eval.py --checkpoint data/image/pusht/diffusion_policy_cnn/train_0/checkpoints/latest.ckpt -o data/pusht_eval_output
-"""
-
 import sys
 # use line-buffering for both stdout and stderr
 sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1)
 sys.stderr = open(sys.stderr.fileno(), mode='w', buffering=1)
-sys.path.append('/home/yixuan/general_dp/robomimic')
-sys.path.append('/home/yixuan/general_dp/diffusion_policy/d3fields_dev')
 
 import os
 import pathlib

@@ -164,12 +164,10 @@ def main(input_dir, output, match_dataset, match_episode,
     os.system(f'mkdir -p {output}')
     kin_helper = KinHelper(robot_name=cfg.task.dataset.robot_name)
     fusion = None
-    expected_labels = None
     for obs_key in cfg.task.shape_meta['obs'].keys():
         if 'd3fields' in obs_key:
             num_cam = len(cfg.task.shape_meta['obs'][obs_key]['info']['view_keys'])
             fusion = Fusion(num_cam=num_cam, dtype=torch.float16)
-            expected_labels = cfg.task.expected_labels if 'expected_labels' in cfg.task else None
             break
 
     obs_res = get_real_obs_resolution(cfg.task.shape_meta)
@@ -215,7 +213,7 @@ def main(input_dir, output, match_dataset, match_episode,
                 policy.reset()
                 obs_dict_np = get_real_obs_dict(
                     env_obs=obs, shape_meta=cfg.task.shape_meta, 
-                    fusion=fusion, expected_labels=expected_labels, teleop=kin_helper)
+                    fusion=fusion, expected_labels=None, teleop=kin_helper)
 
                 obs_dict = dict_apply(obs_dict_np, 
                     lambda x: torch.from_numpy(x).unsqueeze(0).to(device))
@@ -318,7 +316,7 @@ def main(input_dir, output, match_dataset, match_episode,
                             s = time.time()
                             obs_dict_np = get_real_obs_dict(
                                 env_obs=obs, shape_meta=cfg.task.shape_meta, 
-                                fusion=fusion, expected_labels=expected_labels, teleop=kin_helper)
+                                fusion=fusion, expected_labels=None, teleop=kin_helper)
 
                             obs_dict = dict_apply(obs_dict_np, 
                                 lambda x: torch.from_numpy(x).unsqueeze(0).to(device))
@@ -463,7 +461,7 @@ def main(input_dir, output, match_dataset, match_episode,
                             s = time.time()
                             obs_dict_np = get_real_obs_dict(
                                 env_obs=obs, shape_meta=cfg.task.shape_meta, 
-                                fusion=fusion, expected_labels=expected_labels, teleop=kin_helper)
+                                fusion=fusion, expected_labels=None, teleop=kin_helper)
                             obs_dict = dict_apply(obs_dict_np, 
                                 lambda x: torch.from_numpy(x).unsqueeze(0).to(device))
                             result = policy.predict_action(obs_dict)

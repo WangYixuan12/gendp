@@ -306,7 +306,7 @@ class KinHelper():
         if pose_diff > 0.01 or rot_diff > 0.01:
             print('ik pose diff:', pose_diff)
             print('ik rot diff:', rot_diff)
-            warnings.warn('ik pose diff or rot diff too large. Return initial qpos.', RuntimeWarning, stacklevel=2, )
+            print()
             return initial_qpos
         # qpos = self.robot_model.compute_inverse_kinematics(link_index=7, pose=pose,initial_qpos=initial_qpos,active_qmask=active_qmask) 
         # print(qpos) 

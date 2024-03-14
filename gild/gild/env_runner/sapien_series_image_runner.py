@@ -6,15 +6,11 @@ import collections
 import pathlib
 import tqdm
 import h5py
-import math
 import pickle
 import dill
 import wandb.sdk.data_types.video as wv
 import hydra
 from omegaconf import OmegaConf
-import sys
-sys.path.append('/home/bing4090/yixuan_old_branch/general_dp/sapien_env')
-sys.path.append('/home/bing4090/yixuan_old_branch/general_dp/general_dp')
 from sapien_env.rl_env.mug_collect_env import BaseRLEnv
 from sapien_env.sim_env.constructor import add_default_scene_light
 from gild.gym_util.async_vector_env import AsyncVectorEnv

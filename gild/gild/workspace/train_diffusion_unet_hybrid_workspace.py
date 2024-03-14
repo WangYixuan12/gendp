@@ -281,7 +281,6 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
                         with tqdm.tqdm(val_dataloader, desc=f"Validation epoch {self.epoch}", 
                                 leave=False, mininterval=cfg.training.tqdm_interval_sec) as tepoch:
                             for batch_idx, batch in enumerate(tepoch):
-                                print('get data')
                                 # if 'd3fields' in batch['obs']:
                                 #     d3fields = batch['obs']['d3fields']
                                 #     d3fields_mask = torch.any(d3fields[:, :, :3, :] == 0, dim=-1) # (B, T, 3)
@@ -292,17 +291,12 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
                                 #     for key in batch['obs']:
                                 #         batch['obs'][key] = batch['obs'][key][~d3fields_mask]
                                 #     batch['action'] = batch['action'][~d3fields_mask]
-                                print('batch fliter')
                                 batch = dict_apply(batch, lambda x: x.to(device, non_blocking=True))
-                                print('batch to device done')
                                 loss = self.model.compute_loss(batch)
-                                print('loss compute done')
                                 val_losses.append(loss)
-                                print('append done')
                                 if (cfg.training.max_val_steps is not None) \
                                     and batch_idx >= (cfg.training.max_val_steps-1):
                                     break
-                                print('break done')
                                 
                                 result = policy.predict_action(batch['obs'])
                                 pred_action = result['action_pred']
@@ -314,7 +308,6 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
                             # log epoch average validation loss
                             step_log['val_loss'] = val_loss
                             step_log['val_action_mse_error'] = np.mean(val_action_mse_errors)
-                    print('finish validation')
 
                 # run diffusion sampling on a training batch
                 if (self.epoch % cfg.training.sample_every) == 0:
@@ -334,7 +327,6 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
                         del result
                         del pred_action
                         del mse
-                    print('sampling done')
 
                 
                 # checkpoint
@@ -361,7 +353,6 @@ class TrainDiffusionUnetHybridWorkspace(BaseWorkspace):
                     self.save_checkpoint(tag=f'epoch={self.epoch:03d}', use_thread=False)
                     time.sleep(1)
                     
-                    print('checkpoint done')
                 # ========= eval end for this epoch ==========
                 policy.train()
 

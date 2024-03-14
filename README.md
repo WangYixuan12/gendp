@@ -102,13 +102,23 @@ export MKL_NUM_THREADS=1
 Then, we run the following command:
 ```console
 cd [PATH_TO_REPO]/gild
-python train.py --config-dir=config --config-name=[TASK_NAME]/sapien_pick_place_can_d3fields_test.yaml training.seed=42 training.device=cuda training.device_id=0 data_root=[PATH_TO_DATA]
+python train.py --config-dir=config/[TASK_NAME] --config-name=distilled_dino_N_4000.yaml training.seed=42 training.device=cuda training.device_id=0 data_root=[PATH_TO_DATA]
+```
+For example, to train on `small_data` in my local machine, I run the following command:
+```console
+python train.py --config-dir=config/small_data --config-name=distilled_dino_N_4000.yaml training.seed=42 training.device=cuda training.device_id=0 data_root=/home/yixuan/gild
 ```
 Please wait at least till 2 epoches to make sure that all pipelines are working properly.
 
 ### Config Explanation
+- n_test / n_train
+- _every
+- max_steps
+
 ### Adapt to New Task
 - label
+- calibration
+- bimanual
 - modify config
 
 ## Infer in Simulator

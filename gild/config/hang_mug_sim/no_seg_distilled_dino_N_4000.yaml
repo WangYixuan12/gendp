@@ -32,7 +32,7 @@ logging:
   id: null
   mode: online
   name: ${now:%Y.%m.%d}_${task_name}_${dataset_name}_no_seg_distill_dino_N_4000_pn2.1_r_0.04
-  project: diffusion_policy_${task_name}
+  project: gild_${task_name}
   resume: false
   tags:
   - train_diffusion_unet_hybrid

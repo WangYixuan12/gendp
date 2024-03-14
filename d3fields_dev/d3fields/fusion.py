@@ -1,6 +1,5 @@
 import os
 import sys
-sys.path.append('/home/yixuan/general_dp/diffusion_policy/d3fields_dev')
 import time
 import torch
 import torch.nn.functional as F
