@@ -13,15 +13,15 @@ General Diffusion Policies - Yixuan Wang's Internship Project
     2. [Visualize Aggregated 3D Observation](#visualize-aggregated-3d-observation)
     3. [Visualize 3D Semantic Fields](#visualize-3d-semantic-fields)
 5. [Train](#train)
-    2. [Train GILD](#train-gild)
-    3. [Config Explanation](#config-explanation)
-    4. [Adapt to New Task](#adapt-to-new-task)
-6. [Infer in Simulator](#infer-in-simulator)
-7. [Deploy in Real World](#deploy-in-real-world)
-    1. [Set Up Robot](#set-up-robot)
-    2. [Collect Demonstration](#collect-demonstration)
-    3. [Train](#train)
-    4. [Infer in Real World](#infer-in-real-world)
+    1. [Train GILD](#train-gild)
+    2. [<span style="color:red">Config Explanation</span>](#config-explanation)
+6. [<span style="color:red">Infer in Simulator</span>](#infer-in-simulator)
+7. [<span style="color:red">Deploy in Real World</span>](#deploy-in-real-world)
+    1. [<span style="color:red">Set Up Robot</span>](#set-up-robot)
+    2. [<span style="color:red">Collect Demonstration</span>](#collect-demonstration)
+    3. [<span style="color:red">Train</span>](#train)
+    4. [<span style="color:red">Infer in Real World</span>](#infer-in-real-world)
+    3. [<span style="color:red">Adapt to New Task</span>](#adapt-to-new-task)
 
 ## TODO
 - [ ] Train
@@ -115,12 +115,6 @@ Please wait at least till 2 epoches to make sure that all pipelines are working 
 - _every
 - max_steps
 
-### Adapt to New Task
-- label
-- calibration
-- bimanual
-- modify config
-
 ## Infer in Simulator
 
 ## Deploy in Real World
@@ -128,6 +122,11 @@ Please wait at least till 2 epoches to make sure that all pipelines are working 
 ### Collect Demonstration
 ### Train
 ### Infer in Real World
+### Adapt to New Task
+- label
+- calibration
+- bimanual
+- modify config
 ```console
 curl 'https://raw.githubusercontent.com/Interbotix/interbotix_ros_manipulators/main/interbotix_ros_xsarms/install/amd64/xsarm_amd64_install.sh' > xsarm_amd64_install.sh
 chmod +x xsarm_amd64_install.sh
