@@ -1,7 +1,7 @@
 _target_: gild.workspace.train_diffusion_unet_hybrid_workspace.TrainDiffusionUnetHybridWorkspace
 is_real: false
 data_root: /media/yixuan_2T/diffusion_policy
-output_dir: ${data_root}/data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}_no_seg_distill_dino_N_4000_pn2.1_r_0.04
+output_dir: ${data_root}/data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
 checkpoint:
   save_last_ckpt: true
   save_last_snapshot: false
@@ -31,7 +31,7 @@ logging:
   group: null
   id: null
   mode: online
-  name: ${now:%Y.%m.%d}_${task_name}_${dataset_name}_no_seg_distill_dino_N_4000_pn2.1_r_0.04
+  name: ${now:%Y.%m.%d}_${task_name}_${dataset_name}
   project: gild_${task_name}
   resume: false
   tags:
@@ -39,9 +39,6 @@ logging:
   - ${task_name}
   - sim
   - default
-multi_run:
-  run_dir: data/outputs/${now:%Y.%m.%d}/train_diffusion_unet_hybrid_${task_name}
-  wandb_name_base: ${now:%Y.%m.%d}-train_diffusion_unet_hybrid_${task_name}
 n_action_steps: 8
 n_latency_steps: 0
 n_obs_steps: 2
@@ -95,24 +92,14 @@ policy:
         - 4000 # N
         type: spatial
         info:
-          feats_type: no_feats # no_feats, full, pca
           reference_frame: world
-          use_seg: false
-          use_dino: false
           distill_dino: true
           distill_obj: mug
-          rob_pcd: true
           view_keys:
           - left_bottom_view
           - right_bottom_view
           - left_top_view
           - right_top_view
-          query_texts:
-          - soda
-          - pad
-          - table
-          query_thresholds:
-          - 0.3
           N_gripper: 400
           boundaries:
             x_lower: -0.35
@@ -133,24 +120,14 @@ shape_meta:
       - 4000 # N
       type: spatial
       info:
-        feats_type: no_feats # no_feats, full, pca
         reference_frame: world
-        use_seg: false
-        use_dino: false
         distill_dino: true
         distill_obj: mug
-        rob_pcd: true
         view_keys:
         - left_bottom_view
         - right_bottom_view
         - left_top_view
         - right_top_view
-        query_texts:
-        - soda
-        - pad
-        - table
-        query_thresholds:
-        - 0.3
         N_gripper: 400
         boundaries:
           x_lower: -0.35
@@ -173,7 +150,6 @@ task:
     seed: 42
     n_obs_steps: 2
     robot_name: panda
-    expected_labels: [background, soda, pad]
     shape_meta:
       action:
         shape:
@@ -185,24 +161,14 @@ task:
           - 4000 # N
           type: spatial
           info:
-            feats_type: no_feats # no_feats, full, pca
             reference_frame: world
-            use_seg: false
-            use_dino: false
             distill_dino: true
             distill_obj: mug
-            rob_pcd: true
             view_keys:
             - left_bottom_view
             - right_bottom_view
             - left_top_view
             - right_top_view
-            query_texts:
-            - soda
-            - pad
-            - table
-            query_thresholds:
-            - 0.3
             N_gripper: 400
             boundaries:
               x_lower: -0.35
@@ -214,7 +180,7 @@ task:
             resize_ratio: 0.5
     use_cache: true
     val_ratio: 0.1
-    manual_val_mask: True
+    manual_val_mask: False
     manual_val_start: 200
   dataset_dir: ${data_root}/data/sapien_demo/${dataset_name}
   name: ${task_name}
@@ -262,24 +228,14 @@ task:
           - 4000 # N
           type: spatial
           info:
-            feats_type: no_feats # no_feats, full, pca
             reference_frame: world
-            use_seg: false
-            use_dino: false
             distill_dino: true
             distill_obj: mug
-            rob_pcd: true
             view_keys:
             - left_bottom_view
             - right_bottom_view
             - left_top_view
             - right_top_view
-            query_texts:
-            - soda
-            - pad
-            - table
-            query_thresholds:
-            - 0.3
             N_gripper: 400
             boundaries:
               x_lower: -0.35
@@ -303,24 +259,14 @@ task:
         - 4000 # N
         type: spatial
         info:
-          feats_type: no_feats # no_feats, full, pca # no_feats, full, pca
           reference_frame: world
-          use_seg: false
-          use_dino: false
           distill_dino: true
           distill_obj: mug
-          rob_pcd: true
           view_keys:
           - left_bottom_view
           - right_bottom_view
           - left_top_view
           - right_top_view
-          query_texts:
-          - soda
-          - pad
-          - table
-          query_thresholds:
-          - 0.3
           N_gripper: 400
           boundaries:
             x_lower: -0.35
@@ -332,7 +278,7 @@ task:
           resize_ratio: 0.5
   task_name: ${task_name}
 task_name: hang_mug_sim
-dataset_name: mixed_mug_demo_200_v5
+dataset_name: hang_mug_demo
 training:
   checkpoint_every: 100
   debug: false

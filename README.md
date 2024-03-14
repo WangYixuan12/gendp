@@ -23,12 +23,6 @@ General Diffusion Policies - Yixuan Wang's Internship Project
     4. [<span style="color:red">Infer in Real World</span>](#infer-in-real-world)
     3. [<span style="color:red">Adapt to New Task</span>](#adapt-to-new-task)
 
-## TODO
-- [ ] Train
-- [ ] Sim inference
-- [ ] Real deployment
-- [ ] Clean up robomimic database
-
 ## Install
 We recommend [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) instead of the standard anaconda distribution for faster installation: 
 ```console

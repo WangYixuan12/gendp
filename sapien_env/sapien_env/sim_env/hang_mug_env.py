@@ -1,20 +1,12 @@
 import numpy as np
 import sapien.core as sapien
 import transforms3d.euler
-from transforms3d.quaternions import qmult, mat2quat, rotate_vector, qinverse
-import time
-
-import os
-import sys
-curr_path = os.path.abspath(__file__)
-for _ in range(3):
-    curr_path = os.path.dirname(curr_path)
-sys.path.append(curr_path)
+from transforms3d.quaternions import qmult
 
 from sapien_env.sim_env.base import BaseSimulationEnv
 from sapien_env.utils.yx_object_utils import load_open_box, load_yx_obj
 from sapien_env.sim_env.constructor import add_default_scene_light
-from sapien_env.sapien_env.gui.gui_base import GUIBase, DEFAULT_TABLE_TOP_CAMERAS, YX_TABLE_TOP_CAMERAS
+from sapien_env.gui.gui_base import GUIBase, DEFAULT_TABLE_TOP_CAMERAS, YX_TABLE_TOP_CAMERAS
 
 
 class HangMugEnv(BaseSimulationEnv):
