@@ -34,7 +34,7 @@ pip install -e robomimic/
 pip install -e d3fields_dev/
 ```
 
-## Generate Dataset
+## :floppy_disk: Generate Dataset
 
 ### Generate from Existing Environments
 We use the [SAPIEN](https://sapien.ucsd.edu/docs/latest/index.html) to build the simulation environments. To create the data of heuristic policy for single episode, use the following command:
@@ -53,7 +53,7 @@ python gen_multi_episodes.py
 ```
 Arguments can be edited within `gen_multi_episodes.py`.
 
-## Download Dataset
+## :inbox_tray: Download Dataset
 If you want to download a small dataset to test the whole pipeline, you can run `bash scripts/download_small_data.sh`. For hangning mug and pencil insertion task, you can run the following commands:
 ```console
 bash scripts/download_hang_mug.sh
@@ -61,7 +61,7 @@ bash scripts/download_pencil_insertion.sh
 ```
 If the scripts do not work, you could manully download the data from [UIUC Box](https://uofi.box.com/s/n5gahx98s14actc695tn3z0fzl8twcyk) or [Google Drive](https://drive.google.com/drive/folders/1_znHpzBj4c3fulXqt-0UjceRij2SApsH?usp=drive_link) and unzip them.
 
-## Visualize Dataset
+## :art: Visualize Dataset
 
 ### Visualize 2D Observation
 To visualize image observations within hdf5 files, use the following command:
@@ -84,7 +84,7 @@ python gild/tests/vis_semantic_fields.py
 ```
 This will visualize 3D semantic fields processed by [D3Fields](https://robopil.github.io/d3fields/), robot states, and actions. You could adjust dataset path and observation keys in `gild/tests/vis_semantic_fields.py`. The explanation of each entries within `shape_meta` can be seen at [Config Explanation](#config-explanation).
 
-## Train
+## :gear: Train
 
 ### Train GILD
 To run training, we first set the environment variables.
@@ -138,7 +138,7 @@ training:
     rollout_every: the frequency of rolling out the policy in the env_runner
 ```
 
-## Infer in Simulator
+## :video_game: Infer in Simulator
 To run an existing policy in the simulator, use the following command:
 ```console
 cd [PATH_TO_REPO]/gild
@@ -151,7 +151,7 @@ bash scripts/download_ckpts.sh
 You can also download them from [UIUC Box](https://uofi.box.com) or [Google Drive](https://drive.google.com) and unzip them if the scipt fails.
 
 
-## Deploy in Real World
+## :robot: Deploy in Real World
 ### Set Up Robot
 ### Collect Demonstration
 ### Train
