@@ -1,7 +1,6 @@
-# general_dp
-General Diffusion Policies - Yixuan Wang's Internship Project
+# GILD: Generalizable Imitation Learning with 3D Semantic Fields
 
-# Table of Contents
+## Table of Contents
 1. [Install](#install)
 2. [Generate Dataset](#generate-dataset)
     1. [Generate from Existing Environments](#generate-from-existing-environments)
@@ -22,6 +21,11 @@ General Diffusion Policies - Yixuan Wang's Internship Project
     3. [<span style="color:red">Train</span>](#train)
     4. [<span style="color:red">Infer in Real World</span>](#infer-in-real-world)
     3. [<span style="color:red">Adapt to New Task</span>](#adapt-to-new-task)
+
+## TODO:
+- [ ] Download checkpoints
+- [ ] Test in the real world
+- [ ] Go thru the whole README
 
 ## :hammer: Install
 We recommend [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) instead of the standard anaconda distribution for faster installation: 
@@ -153,7 +157,39 @@ You can also download them from [UIUC Box](https://uofi.box.com) or [Google Driv
 
 ## :robot: Deploy in Real World
 ### Set Up Robot
+We conduct our experiments on the [Aloha](https://github.com/tonyzhaozh/aloha). If you already have ROS noetic installed, you could run the following commands to set up the aloha.
+```console
+bash scripts/setup_aloha.sh
+```
+
+As mentioned in Aloha README, you need to go to ``~/interbotix_ws/src/interbotix_ros_toolboxes/interbotix_xs_toolbox/interbotix_xs_modules/src/interbotix_xs_modules/arm.py``, find function ``publish_positions``. Change ``self.T_sb = mr.FKinSpace(self.robot_des.M, self.robot_des.Slist, self.joint_commands)`` to ``self.T_sb = None``. This prevents the code from calculating FK at every step which delays teleoperation.
+
+We also need to update usb rules for the robot. You could run the following commands to update the usb rules.
+```console
+sudo bash scripts/modify_usb_rules.sh
+sudo udevadm control --reload && sudo udevadm trigger
+```
+
+Remember to reboot the computer after the installation. If you encounter any problems, please refer to the [Aloha](https://github.com/tonyzhaozh/aloha).
+
+To test whether the robot installation is successful, you could run the following command:
+```console
+# for boths sides
+roslaunch aloha 4arms_teleop.launch
+python gild/gild/real_world/aloha_simple_teleop.py --left --right
+
+# for left side
+roslaunch aloha 2arms_left_teleop.launch
+python gild/gild/real_world/aloha_simple_teleop.py --left
+
+# for right side
+roslaunch aloha 2arms_right_teleop.launch
+python gild/gild/real_world/aloha_simple_teleop.py --right
+```
+
 ### Collect Demonstration
+- calibrate
+- collect
 ### Train
 ### Infer in Real World
 ### Adapt to New Task
@@ -161,39 +197,5 @@ You can also download them from [UIUC Box](https://uofi.box.com) or [Google Driv
 - calibration
 - bimanual
 - modify config
-```console
-curl 'https://raw.githubusercontent.com/Interbotix/interbotix_ros_manipulators/main/interbotix_ros_xsarms/install/amd64/xsarm_amd64_install.sh' > xsarm_amd64_install.sh
-chmod +x xsarm_amd64_install.sh
-./xsarm_amd64_install.sh -d noetic
-​source /opt/ros/noetic/setup.sh && source ~/interbotix_ws/devel/setup.sh
-cd ~/interbotix_ws/src
-​git clone git@github.com:tonyzhaozh/aloha.git
-​cd ~/interbotix_ws
-catkin_make
-```
-1. Go to ``~/interbotix_ws/src/interbotix_ros_toolboxes/interbotix_xs_toolbox/interbotix_xs_modules/src/interbotix_xs_modules/arm.py``, find function ``publish_positions``. Change ``self.T_sb = mr.FKinSpace(self.robot_des.M, self.robot_des.Slist, self.joint_commands)`` to ``self.T_sb = None``. This prevents the code from calculating FK at every step which delays teleoperation.
-2. Remember to reboot the computer after the installation.
 
-
-```console
-sudo vim /etc/udev/rules.d/99-interbotix-udev.rules
-```
-
-Add following lines:
-
-```
-# puppet robot left 
-SUBSYSTEM=="tty", ATTRS{serial}=="FT66WCAW", ENV{ID_MM_DEVICE_IGNORE}="1", ATTR{device/latency_timer}="1", SYMLINK+="ttyDXL_puppet_left"
-
-# puppet robot right 
-SUBSYSTEM=="tty", ATTRS{serial}=="FT66WB35", ENV{ID_MM_DEVICE_IGNORE}="1", ATTR{device/latency_timer}="1", SYMLINK+="ttyDXL_puppet_right"
-
-# master robot left
-SUBSYSTEM=="tty", ATTRS{serial}=="FT6Z5Q1I", ENV{ID_MM_DEVICE_IGNORE}="1", ATTR{device/latency_timer}="1", SYMLINK+="ttyDXL_master_left"
-
-# master robot right
-SUBSYSTEM=="tty", ATTRS{serial}=="FT6Z5MYV", ENV{ID_MM_DEVICE_IGNORE}="1", ATTR{device/latency_timer}="1", SYMLINK+="ttyDXL_master_right"
-```
-​
-Reload usb dev:
-​`sudo udevadm control --reload && sudo udevadm trigger`
+## :pray: Acknowledgement

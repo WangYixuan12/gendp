@@ -21,7 +21,6 @@ from gild.common.timestamp_accumulator import (
 from gild.common.precise_sleep import precise_wait
 from gild.common.data_utils import load_dict_from_hdf5
 from gild.real_world.multi_camera_visualizer import MultiCameraVisualizer
-from gild.real_world.aloha_puppet import AlohaPuppet
 from gild.real_world.aloha_bimanual_puppet import AlohaBimanualPuppet
 from gild.common.replay_buffer import ReplayBuffer
 from gild.common.cv2_util import (
@@ -219,16 +218,6 @@ class RealAlohaEnv:
                     rgb_to_bgr=False
                 )
 
-
-        # set up robot
-        # if len(robot_sides) == 1:
-        #     self.puppet_bot = AlohaPuppet(
-        #         shm_manager=shm_manager,
-        #         frequency=50,
-        #         robot_side=robot_sides[0],
-        #         verbose=False
-        #     )
-        # elif len(robot_sides) == 2:
         self.puppet_bot = AlohaBimanualPuppet(
             shm_manager=shm_manager,
             frequency=50,

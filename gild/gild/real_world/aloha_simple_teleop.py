@@ -1,10 +1,5 @@
 import time
-import sys
-import IPython
-e = IPython.embed
-
-import numpy as np
-import transforms3d
+import argparse
 
 from interbotix_xs_modules.arm import InterbotixManipulatorXS
 from interbotix_xs_msgs.msg import JointSingleCommand
@@ -46,86 +41,50 @@ def press_to_start(master_bot):
     torque_off(master_bot)
     print(f'Started!')
 
-def teleop(robot_side):
+def teleop(robot_sides):
     """ A standalone function for experimenting with teleoperation. No data recording. """
-    puppet_bot = InterbotixManipulatorXS(robot_model="vx300s", group_name="arm", gripper_name="gripper", robot_name=f'puppet_{robot_side}', init_node=True)
-    master_bot = InterbotixManipulatorXS(robot_model="wx250s", group_name="arm", gripper_name="gripper", robot_name=f'master_{robot_side}', init_node=False)
+    num_bot = len(robot_sides)
+    puppet_bots = [InterbotixManipulatorXS(robot_model="vx300s", group_name="arm", gripper_name="gripper", robot_name=f'puppet_{robot_sides[0]}', init_node=True) for robot_side in robot_sides]
+    puppet_bots += [InterbotixManipulatorXS(robot_model="vx300s", group_name="arm", gripper_name="gripper", robot_name=f'puppet_{robot_side}', init_node=False) for robot_side in robot_sides[1:]]
+    master_bots = [InterbotixManipulatorXS(robot_model="wx250s", group_name="arm", gripper_name="gripper", robot_name=f'master_{robot_side}', init_node=False) for robot_side in robot_sides]
 
-    prep_robots(master_bot, puppet_bot)
-    press_to_start(master_bot)
+    for i in range(num_bot):
+        prep_robots(master_bots[i], puppet_bots[i])
+        press_to_start(master_bots[i])
 
     ### Teleoperation loop
     gripper_command = JointSingleCommand(name="gripper")
     while True:
         start_time = time.monotonic()
         
-        # sync joint positions
-        master_state_joints = master_bot.dxl.joint_states.position[:6]
-        puppet_bot.arm.set_joint_positions(master_state_joints, blocking=False)
+        for i in range(num_bot):
+            # sync joint positions
+            master_state_joints = master_bots[i].dxl.joint_states.position[:6]
+            puppet_bots[i].arm.set_joint_positions(master_state_joints, blocking=False)
+            
+            # sync gripper positions
+            master_gripper_joint = master_bots[i].dxl.joint_states.position[6]
+            puppet_gripper_joint_target = MASTER2PUPPET_JOINT_FN(master_gripper_joint)
+            gripper_command.cmd = puppet_gripper_joint_target
+            puppet_bots[i].gripper.core.pub_single.publish(gripper_command)
         
-        # # sapien impl
-        # curr_puppet_joint_pos = np.array(puppet_bot.dxl.joint_states.position[:6])
-        # master_joint_pos = np.array(master_bot.dxl.joint_states.position[:6])
-        # target_puppet_ee_pose = teleop_robot.compute_fk(np.concatenate([master_joint_pos, np.zeros(2)])[:,None])
-        # target_puppet_joint_pos = teleop_robot.ik_vx300s_sapien_pose(initial_qpos=np.concatenate([curr_puppet_joint_pos, np.zeros(2)])[:,None],
-        #                                                  pose=target_puppet_ee_pose,)
-        # puppet_bot.arm.set_joint_positions(target_puppet_joint_pos, blocking=False)
-        
-        # sync gripper positions
-        master_gripper_joint = master_bot.dxl.joint_states.position[6]
-        puppet_gripper_joint_target = MASTER2PUPPET_JOINT_FN(master_gripper_joint)
-        gripper_command.cmd = puppet_gripper_joint_target
-        puppet_bot.gripper.core.pub_single.publish(gripper_command)
         # sleep DT
         time.sleep(max(0, DT - (time.monotonic() - start_time)))
         
         end_time = time.monotonic()
         print('control freq: ', 1/(end_time - start_time))
 
-def low_freq_teleop(robot_side):
-    """ A standalone function for experimenting with teleoperation. No data recording. """
-    puppet_bot = InterbotixManipulatorXS(robot_model="vx300s", group_name="arm", gripper_name="gripper", robot_name=f'puppet_{robot_side}', init_node=True)
-    master_bot = InterbotixManipulatorXS(robot_model="wx250s", group_name="arm", gripper_name="gripper", robot_name=f'master_{robot_side}', init_node=False)
-
-    prep_robots(master_bot, puppet_bot)
-    press_to_start(master_bot)
-
-    ### Teleoperation loop
-    gripper_command = JointSingleCommand(name="gripper")
-    DT = 0.1
-    puppet_DT = 0.02
-    max_joint_vel = 0.4 # rad/s
-    last_master_state_joints = None
-    while True:
-        start_time = time.monotonic()
-        
-        # sync joint positions
-        master_state_joints = np.array(master_bot.dxl.joint_states.position[:6])
-        
-        last_master_state_joints = master_state_joints if last_master_state_joints is None else last_master_state_joints
-        curr_puppet_state_joints = last_master_state_joints.copy()
-        for i in range(int(DT/puppet_DT)):
-            start_time = time.monotonic()
-            delta_puppet_state_joints = np.clip(master_state_joints - curr_puppet_state_joints, -max_joint_vel*puppet_DT, max_joint_vel*puppet_DT)
-            curr_puppet_state_joints = curr_puppet_state_joints + delta_puppet_state_joints
-            puppet_bot.arm.set_joint_positions(curr_puppet_state_joints, blocking=False)
-            # puppet_bot.arm.set_joint_positions(inter_state_joints_ls[i], blocking=False)
-            
-            # sync gripper positions
-            master_gripper_joint = master_bot.dxl.joint_states.position[6]
-            puppet_gripper_joint_target = MASTER2PUPPET_JOINT_FN(master_gripper_joint)
-            gripper_command.cmd = puppet_gripper_joint_target
-            puppet_bot.gripper.core.pub_single.publish(gripper_command)
-            # sleep DT
-            time.sleep(max(0, puppet_DT - (time.monotonic() - start_time)))
-            
-            end_time = time.monotonic()
-            print('control freq: ', 1/(end_time - start_time))
-        
-        last_master_state_joints = curr_puppet_state_joints.copy()
-        last_master_state_joints = master_state_joints.copy()
-
 if __name__=='__main__':
-    side = 'right'
-    teleop(side)
-    # low_freq_teleop(side)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--right', action='store_true', help='Teleoperate right robot')
+    parser.add_argument('--left', action='store_true', help='Teleoperate left robot')
+    args = parser.parse_args()
+    
+    sides = []
+    if args.right:
+        sides.append('right')
+    if args.left:
+        sides.append('left')
+    if not args.right and not args.left:
+        raise ValueError('At least one robot side should be teleoperated')
+    teleop(sides)
