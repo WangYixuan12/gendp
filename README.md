@@ -212,11 +212,18 @@ python gild/demo_real_aloha.py --output_dir [OUTPUT_DIR] --robot_sides [ROBOT_SI
 ```
 
 ### Train
+The traning is similar to the training in the simulator. Here are two examples:
+```console
+bash scripts/download_real_data.sh # download the real data
+python train.py --config-dir=config/knife_real --config-name=distilled_dino_N_1000.yaml training.seed=42 training.device=cuda training.device_id=0 data_root=/home/yixuan/gild # train the model for pick_up_knife task
+python train.py --config-dir=config/pen_real --config-name=distilled_dino_N_1000.yaml training.seed=42 training.device=cuda training.device_id=0 data_root=/home/yixuan/gild # train the model for pick_up_pen task
+```
+
 ### Infer in Real World
 ### Adapt to New Task
 - label
-- calibration
-- bimanual
 - modify config
+  - input
+  - name
 
 ## :pray: Acknowledgement
