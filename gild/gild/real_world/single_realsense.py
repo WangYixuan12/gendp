@@ -603,7 +603,11 @@ class SingleRealsense(mp.Process):
             while not self.stop_event.is_set():
                 wait_start_time = time.time()
                 # wait for frames to come in
-                frameset = pipeline.wait_for_frames()
+                try:
+                    frameset = pipeline.wait_for_frames(timeout_ms=int(1000 * 1/fps)+ 10)
+                except RuntimeError:
+                    warnings.warn('RuntimeError in wait_for_frames, skipping frame.')
+                    continue
                 receive_time = time.time()
                 # align frames to color
                 frameset = align.process(frameset)

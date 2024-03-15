@@ -8,9 +8,6 @@ import open3d as o3d
 import urdfpy
 import warnings
 warnings.filterwarnings("always", category=RuntimeWarning)
-# import pybullet as p
-from gild.common.stdout_utils import suppress_stdout
-from gild.common.data_utils import load_dict_from_hdf5
 
 # test sapien
 import sapien.core as sapien
@@ -186,8 +183,7 @@ class KinHelper():
         for link_idx, link_name in enumerate(link_names):
             import copy
             mesh = copy.deepcopy(self.meshes[link_name])
-            if 'trossen' in self.robot_name:
-                mesh.scale(0.001, center=np.array([0, 0, 0]))
+            mesh.scale(0.001, center=np.array([0, 0, 0]))
             tf = link_pose_ls[link_idx] @ offsets_ls[link_idx]
             mesh.transform(tf)
             meshes_ls.append(mesh)
@@ -284,13 +280,16 @@ class KinHelper():
     #                                               jointRanges=self.bullet_jr, restPoses=initial_qpos.tolist())
     #     return np.array(jointPoses)
 
-    def compute_ik_sapien(self,initial_qpos,cartesian):
+    def compute_ik_sapien(self,initial_qpos,cartesian,pose_fmt='euler'):
         # p = cartesian[0:3]
         # q = transforms3d.euler.euler2quat(ai=cartesian[3],aj=cartesian[4],ak=cartesian[5],axes='sxyz')
         # pose = sapien.Pose(p=p, q=q)
-        tf_mat = np.eye(4)
-        tf_mat[:3, :3] = transforms3d.euler.euler2mat(ai=cartesian[3],aj=cartesian[4],ak=cartesian[5],axes='sxyz')
-        tf_mat[:3, 3] = cartesian[0:3]
+        if pose_fmt == 'euler':
+            tf_mat = np.eye(4)
+            tf_mat[:3, :3] = transforms3d.euler.euler2mat(ai=cartesian[3],aj=cartesian[4],ak=cartesian[5],axes='sxyz')
+            tf_mat[:3, 3] = cartesian[0:3]
+        elif pose_fmt == 'mat':
+            tf_mat = cartesian
         pose = sapien.Pose.from_transformation_matrix(tf_mat)
         if 'trossen' in self.robot_name:
             active_qmask= np.array([True,True,True,True,True,True,False,False])
@@ -306,7 +305,7 @@ class KinHelper():
         if pose_diff > 0.01 or rot_diff > 0.01:
             print('ik pose diff:', pose_diff)
             print('ik rot diff:', rot_diff)
-            print()
+            warnings.warn('ik pose diff or rot diff too large. Return initial qpos.', RuntimeWarning, stacklevel=2, )
             return initial_qpos
         # qpos = self.robot_model.compute_inverse_kinematics(link_index=7, pose=pose,initial_qpos=initial_qpos,active_qmask=active_qmask) 
         # print(qpos) 

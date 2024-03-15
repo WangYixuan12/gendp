@@ -249,7 +249,7 @@ def prep_puppet_robot(bot, init_qpos=None):
     bot.dxl.robot_set_operating_modes("single", "gripper", "current_based_position")
     bot.dxl.robot_torque_enable("single", "gripper", True)
     
-    bot.dxl.robot_set_motor_registers("group", "arm", 'Position_P_Gain', 200)
+    bot.dxl.robot_set_motor_registers("group", "arm", 'Position_P_Gain', 300)
     bot.dxl.robot_set_motor_registers("group", "arm", 'Position_I_Gain', 0)
     
     # puppet_bot.dxl.robot_set_motor_registers("single", "gripper", 'current_limit', 1000) # TODO(tonyzhaozh) figure out how to set this limit

@@ -21,7 +21,9 @@ from gild.common.timestamp_accumulator import (
 from gild.common.precise_sleep import precise_wait
 from gild.common.data_utils import load_dict_from_hdf5
 from gild.real_world.multi_camera_visualizer import MultiCameraVisualizer
+from gild.real_world.aloha_puppet import AlohaPuppet
 from gild.real_world.aloha_bimanual_puppet import AlohaBimanualPuppet
+from gild.real_world.aloha_bimanual_interpolation_puppet import AlohaBimanualInterpPuppet
 from gild.common.replay_buffer import ReplayBuffer
 from gild.common.cv2_util import (
     get_image_transform, optimal_row_cols)
@@ -218,7 +220,7 @@ class RealAlohaEnv:
                     rgb_to_bgr=False
                 )
 
-        self.puppet_bot = AlohaBimanualPuppet(
+        self.puppet_bot = AlohaBimanualInterpPuppet(
             shm_manager=shm_manager,
             frequency=50,
             robot_sides=robot_sides,
@@ -458,9 +460,9 @@ class RealAlohaEnv:
         elif mode == 'eef':
             for i in range(len(new_eef_actions)):
                 if ik_init is None:
-                    self.puppet_bot.set_target_ee_pose(new_eef_actions[i], new_timestamps[i])
+                    self.puppet_bot.schedule_target_ee_pose(new_eef_actions[i], new_timestamps[i])
                 else:
-                    self.puppet_bot.set_target_ee_pose(new_eef_actions[i], new_timestamps[i], initial_qpos=ik_init[i])
+                    self.puppet_bot.schedule_target_ee_pose(new_eef_actions[i], new_timestamps[i], initial_qpos=ik_init[i])
         
         # record joint_actions
         if self.joint_action_accumulator is not None:

@@ -69,7 +69,7 @@ def main(output_dir, robot_sides, robot_init_joints, vis_camera_idx, frequency, 
                 video_crf=21,
                 shm_manager=shm_manager,
                 init_qpos=robot_init_joints,
-                use_femto=True,
+                use_femto=False,
             ) as env, \
             AlohaMaster(shm_manager=shm_manager, robot_side=robot_sides[0]) if len(robot_sides) == 1 else \
                 AlohaBimanualMaster(shm_manager=shm_manager, robot_sides=robot_sides) as master_bot:

@@ -35,6 +35,7 @@ import skvideo.io
 import transforms3d
 import open3d as o3d
 from omegaconf import OmegaConf
+from omegaconf import open_dict
 import scipy.spatial.transform as st
 import diffusers
 from d3fields.utils.draw_utils import np2o3d
@@ -56,6 +57,22 @@ from gild.common.aloha_utils import (
 )
 
 from d3fields.fusion import Fusion
+
+def obs_dict_np_to_o3d(obs_dict_np):
+    from matplotlib import cm
+    cmap = cm.get_cmap('viridis')
+    if 'd3fields' in obs_dict_np:
+        d3fields = obs_dict_np['d3fields'][0, :3].transpose()
+    else:
+        d3fields = np.zeros((1,3))
+
+    if ('d3fields' in obs_dict_np) and (obs_dict_np['d3fields'].shape[1] > 3):
+        d3fields_heatmap = obs_dict_np['d3fields'][0, 3].transpose() # (N, 1)
+        d3fields_heatmap_color = cmap(d3fields_heatmap)[...,:3] # (N, 3)
+        d3fields_o3d = np2o3d(d3fields, d3fields_heatmap_color)
+    else:
+        d3fields_o3d = np2o3d(d3fields)
+    return d3fields_o3d
 
 def policy_action_to_env_action(policy_action, action_mode, num_bots):
     # policy_action: (T, Da), Da=10 * num_bots (3 dof translation, 6 dof rotation, 1 gripper)
@@ -149,7 +166,10 @@ def main(input_dir, output, match_dataset, match_episode,
             prediction_type='epsilon'
         )
         policy.noise_scheduler = noise_scheduler
-        # cfg.task.shape_meta['obs']['d3fields']['info']['boundaries']['z_lower'] = 0.025
+        if 'd3fields' in cfg.task.shape_meta['obs']:
+            # cfg.task.shape_meta['obs']['d3fields']['info']['boundaries']['z_lower'] = 0.022
+            with open_dict(cfg.task.shape_meta['obs']):
+                cfg.task.shape_meta['obs']['d3fields']['info']['exclude_colors'] = ['yellow']
         if 'key' not in cfg.task.shape_meta['action'] or cfg.task.shape_meta['action']['key'] == 'eef_action':
             action_mode = 'eef'
         elif cfg.task.shape_meta['action']['key'] == 'joint_action':
@@ -164,10 +184,12 @@ def main(input_dir, output, match_dataset, match_episode,
     os.system(f'mkdir -p {output}')
     kin_helper = KinHelper(robot_name=cfg.task.dataset.robot_name)
     fusion = None
+    expected_labels = None
     for obs_key in cfg.task.shape_meta['obs'].keys():
         if 'd3fields' in obs_key:
             num_cam = len(cfg.task.shape_meta['obs'][obs_key]['info']['view_keys'])
             fusion = Fusion(num_cam=num_cam, dtype=torch.float16)
+            expected_labels = cfg.task.expected_labels if 'expected_labels' in cfg.task else None
             break
 
     obs_res = get_real_obs_resolution(cfg.task.shape_meta)
@@ -193,7 +215,8 @@ def main(input_dir, output, match_dataset, match_episode,
                 thread_per_video=3,
                 # video recording quality, lower is better (but slower).
                 video_crf=21,
-                shm_manager=shm_manager) as env, \
+                shm_manager=shm_manager,
+                use_femto=False) as env, \
                 AlohaMaster(shm_manager=shm_manager, robot_side=robot_sides[0]) if len(robot_sides) == 1 else \
                     AlohaBimanualMaster(shm_manager=shm_manager, robot_sides=robot_sides) as master_bot:
             cv2.setNumThreads(1)
@@ -211,9 +234,10 @@ def main(input_dir, output, match_dataset, match_episode,
             obs = env.get_obs()
             with torch.no_grad():
                 policy.reset()
+                exclude_colors = cfg.task.dataset.exclude_colors if 'exclude_colors' in cfg.task.dataset else []
                 obs_dict_np = get_real_obs_dict(
                     env_obs=obs, shape_meta=cfg.task.shape_meta, 
-                    fusion=fusion, expected_labels=None, teleop=kin_helper)
+                    fusion=fusion, expected_labels=expected_labels, teleop=kin_helper, exclude_colors=exclude_colors)
 
                 obs_dict = dict_apply(obs_dict_np, 
                     lambda x: torch.from_numpy(x).unsqueeze(0).to(device))
@@ -316,7 +340,7 @@ def main(input_dir, output, match_dataset, match_episode,
                             s = time.time()
                             obs_dict_np = get_real_obs_dict(
                                 env_obs=obs, shape_meta=cfg.task.shape_meta, 
-                                fusion=fusion, expected_labels=None, teleop=kin_helper)
+                                fusion=fusion, expected_labels=expected_labels, teleop=kin_helper, exclude_colors=exclude_colors)
 
                             obs_dict = dict_apply(obs_dict_np, 
                                 lambda x: torch.from_numpy(x).unsqueeze(0).to(device))
@@ -330,15 +354,11 @@ def main(input_dir, output, match_dataset, match_episode,
                             visualizer = o3d.visualization.Visualizer()
                             visualizer.create_window()
 
-                            if 'd3fields' in obs_dict_np:
-                                d3fields = obs_dict_np['d3fields'][0, :3].transpose()
-                            else:
-                                d3fields = np.zeros((1,3))
-                            d3fields_o3d = np2o3d(d3fields)
+                            d3fields_o3d = obs_dict_np_to_o3d(obs_dict_np)
 
                             curr_d3fields = d3fields_o3d
-                            origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5)
-                            visualizer.add_geometry(origin)
+                            # origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5)
+                            # visualizer.add_geometry(origin)
                             visualizer.add_geometry(curr_d3fields)
 
                         # visualize end effector actions
@@ -383,11 +403,7 @@ def main(input_dir, output, match_dataset, match_episode,
                                 visualizer.run()
                         
                         # visualize in open3d
-                        if 'd3fields' in obs_dict_np:
-                            d3fields = obs_dict_np['d3fields'][0, :3].transpose()
-                        else:
-                            d3fields = np.zeros((1,3))
-                        d3fields_o3d = np2o3d(d3fields)
+                        d3fields_o3d = obs_dict_np_to_o3d(obs_dict_np)
 
                         curr_d3fields.points = d3fields_o3d.points
                         curr_d3fields.colors = d3fields_o3d.colors
@@ -425,7 +441,8 @@ def main(input_dir, output, match_dataset, match_episode,
                     env.exec_actions(
                         joint_actions=[target_state],
                         eef_actions=[human_eef_actions],
-                        timestamps=[time.time() + 0.1])
+                        timestamps=[time.time() + 0.1],
+                        mode='eef')
                     precise_wait(t_cycle_end)
                     iter_idx += 1
                 # ========== policy control loop ==============
@@ -461,23 +478,68 @@ def main(input_dir, output, match_dataset, match_episode,
                             s = time.time()
                             obs_dict_np = get_real_obs_dict(
                                 env_obs=obs, shape_meta=cfg.task.shape_meta, 
-                                fusion=fusion, expected_labels=None, teleop=kin_helper)
+                                fusion=fusion, expected_labels=expected_labels, teleop=kin_helper, exclude_colors=exclude_colors)
                             obs_dict = dict_apply(obs_dict_np, 
                                 lambda x: torch.from_numpy(x).unsqueeze(0).to(device))
                             result = policy.predict_action(obs_dict)
                             # this action starts from the first obs step
                             action = result['action'][0].detach().to('cpu').numpy() # (T, Da), Da=10 (3 dof translation, 6 dof rotation, 1 gripper)
+
+                            # check abnormal action
+                            abnormal_action = False
+                            # abnormal_action_mask = np.zeros(action.shape[0], dtype=bool)
+                            for rob_i in range(num_bots):
+                                action_rob_i = action[:, rob_i*10:(rob_i+1)*10] # (T, 10), Da=10 (3 dof translation, 6 dof rotation, 1 gripper)
+                                curr_eef_pose_mat = kin_helper.compute_fk_sapien_links(obs['full_joint_pos'][-1][rob_i*8:(rob_i+1)*8], [kin_helper.sapien_eef_idx])[0]
+                                robot_base_poses = env.puppet_bot.base_pose_in_world # (num_bots, 4, 4)
+                                curr_eef_pose_mat = np.linalg.inv(robot_base_poses[0]) @ robot_base_poses[rob_i] @ curr_eef_pose_mat
+                                action_pos_cat = np.concatenate([curr_eef_pose_mat[:3,3][None], action_rob_i[:,:3]], axis=0)
+                                action_diff = action_pos_cat[1:] - action_pos_cat[:-1]
+                                action_diff_norm = np.linalg.norm(action_diff, axis=-1)
+
+                                curr_eef_quat = st.Rotation.from_matrix(curr_eef_pose_mat[:3,:3]).as_quat() # (4,)
+                                from pytorch3d.transforms import rotation_6d_to_matrix
+                                pred_act_rot_mat = rotation_6d_to_matrix(torch.from_numpy(action_rob_i[:,3:9])).numpy() # (T, 3, 3)
+                                pred_act_quat = st.Rotation.from_matrix(pred_act_rot_mat).as_quat() # (T, 4)
+                                pad_quat = np.concatenate([curr_eef_quat[None], pred_act_quat], axis=0)
+                                quat_dist = 1 - np.square(np.sum(pad_quat[:-1] * pad_quat[1:], axis=-1))
+
+                                if action_diff_norm.max() > 0.1 or quat_dist.max() > 0.5:
+                                    print('Predicted action', action_rob_i)
+                                    print('Concat action', action_pos_cat)
+                                    print('Concat quat', pad_quat)
+                                    abnormal_action = True
+                                
+                                    # for t in range(action.shape[0]):
+                                    #     if t == 0 and (action_diff_norm[t] > 0.1 or quat_dist[t] > 0.5) \
+                                    #         and (action_diff_norm[t+1] < 0.1 and quat_dist[t+1] < 0.5):
+                                    #         abnormal_action_mask[t] = True
+                                    #     elif t == action.shape[0] - 1 and (action_diff_norm[t] > 0.1 or quat_dist[t] > 0.5) \
+                                    #         and (action_diff_norm[t-1] < 0.1 and quat_dist[t-1] < 0.5):
+                                    #         abnormal_action_mask[t] = True
+                                    #     elif t > 0 and t < action.shape[0] - 1 and (action_diff_norm[t] > 0.1 or quat_dist[t] > 0.5) \
+                                    #         and (action_diff_norm[t-1] > 0.1 and quat_dist[t-1] > 0.5):
+                                    #         abnormal_action_mask[t] = True
+                            if abnormal_action:
+                                # action = action[~abnormal_action_mask]
+                                key_stroke = cv2.pollKey()
+                                if key_stroke == ord('s'):
+                                    # Stop episode
+                                    # Hand control back to human
+                                    env.end_episode()
+                                    print('Stopped.')
+                                    break
+                                # iter_idx += steps_per_inference
+                                # precise_wait(t_cycle_end - frame_latency)
+                                continue
+
                             print('Inference latency:', time.time() - s)
                             print('predicted action', action)
                         
                         ### visualize policy
                         if vis_d3fields:
                             # visualize in d3fields
-                            if 'd3fields' in obs_dict_np:
-                                d3fields = obs_dict_np['d3fields'][0, :3].transpose()
-                            else:
-                                d3fields = np.zeros((1,3))
-                            d3fields_o3d = np2o3d(d3fields)
+                            d3fields_o3d = obs_dict_np_to_o3d(obs_dict_np)
 
                             curr_d3fields.points = d3fields_o3d.points
                             curr_d3fields.colors = d3fields_o3d.colors
@@ -519,7 +581,8 @@ def main(input_dir, output, match_dataset, match_episode,
                                     visualizer.update_geometry(action_meshes[ls_idx])
                             visualizer.poll_events()
                             visualizer.update_renderer()
-                            visualizer.capture_screen_image(f'{output}/d3fields_vis/d3fields_{iter_idx}.png')
+                            os.system(f'mkdir -p {output}/d3fields_vis/episode_{env.episode_id}')
+                            visualizer.capture_screen_image(f'{output}/d3fields_vis/episode_{env.episode_id}/d3fields_{iter_idx}.png')
                         ### finish visualization
                         
                         env_actions = policy_action_to_env_action(action, action_mode, num_bots)
@@ -529,7 +592,7 @@ def main(input_dir, output, match_dataset, match_episode,
                         # the same step actions are always the target for
                         action_timestamps = (np.arange(len(action), dtype=np.float64) + action_offset
                             ) * dt + obs_timestamps[-1]
-                        action_exec_latency = 0.1
+                        action_exec_latency = 0.2
                         curr_time = time.time()
                         is_new = action_timestamps > (curr_time + action_exec_latency)
                         if np.sum(is_new) == 0:
@@ -553,10 +616,10 @@ def main(input_dir, output, match_dataset, match_episode,
                         #                                         transforms3d.euler.mat2euler(curr_eef_pose_mat[:3,:3], axes='sxyz')])
                         #         env_actions[:,rob_i*7:rob_i*7+3] = np.clip(
                         #             env_actions[:,rob_i*7:rob_i*7+3], 
-                        #             curr_eef_pose[:3] - 0.1, curr_eef_pose[:3] + 0.1)
-                        #         env_actions[:,rob_i*7+3:rob_i*7+6] = np.clip(
-                        #             env_actions[:,rob_i*7+3:rob_i*7+6], 
-                        #             curr_eef_pose[3:6] - np.pi/4.0, curr_eef_pose[3:6] + np.pi/4.0)
+                        #             curr_eef_pose[:3] - 0.05, curr_eef_pose[:3] + 0.05)
+                        #         # env_actions[:,rob_i*7+3:rob_i*7+6] = np.clip(
+                        #         #     env_actions[:,rob_i*7+3:rob_i*7+6], 
+                        #         #     curr_eef_pose[3:6] - np.pi/4.0, curr_eef_pose[3:6] + np.pi/4.0)
                         # elif action_mode == 'joint':
                         #     curr_joint_pos = obs['joint_pos'][-1]
                         #     env_actions = np.clip(
@@ -572,7 +635,7 @@ def main(input_dir, output, match_dataset, match_episode,
                                     eef_actions=env_actions,
                                     # timestamps=action_timestamps + 0.5,
                                     # timestamps=action_timestamps + time.time() - obs_timestamps[-1] + action_send_delay, # debug only
-                                    timestamps=action_timestamps, # debug only
+                                    timestamps=action_timestamps,
                                     mode=action_mode,)
                                     # ik_init=[obs['full_joint_pos'][-1] for _ in range(len(env_actions))])
                             elif action_mode == 'joint':

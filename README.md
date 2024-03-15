@@ -17,10 +17,11 @@
 6. [Infer in Simulator](#infer-in-simulator)
 7. [Deploy in Real World](#deploy-in-real-world)
     1. [Set Up Robot](#set-up-robot)
-    2. [Collect Demonstration](#collect-demonstration)
-    3. [<span style="color:red">Train</span>](#train)
-    4. [<span style="color:red">Infer in Real World</span>](#infer-in-real-world)
-    3. [<span style="color:red">Adapt to New Task</span>](#adapt-to-new-task)
+    2. [Calibrate Camera and Robot Transformation](#calibrate-camera-and-robot-transformation)
+    3. [Collect Demonstration](#collect-demonstration)
+    4. [<span style="color:red">Train</span>](#train)
+    5. [<span style="color:red">Infer in Real World</span>](#infer-in-real-world)
+    6. [<span style="color:red">Adapt to New Task</span>](#adapt-to-new-task)
 
 ## TODO:
 - [ ] Download checkpoints
@@ -156,23 +157,21 @@ You can also download them from [UIUC Box](https://uofi.box.com) or [Google Driv
 
 
 ## :robot: Deploy in Real World
+
+### Hardware Prerequisites
+- [Aloha](https://github.com/tonyzhaozh/aloha)
+- \>=1 Realsense Camera
+
 ### Set Up Robot
-We conduct our experiments on the [Aloha](https://github.com/tonyzhaozh/aloha). If you already have ROS noetic installed, you could run the following commands to set up the aloha.
-```console
-bash scripts/setup_aloha.sh
-```
-
-As mentioned in Aloha README, you need to go to ``~/interbotix_ws/src/interbotix_ros_toolboxes/interbotix_xs_toolbox/interbotix_xs_modules/src/interbotix_xs_modules/arm.py``, find function ``publish_positions``. Change ``self.T_sb = mr.FKinSpace(self.robot_des.M, self.robot_des.Slist, self.joint_commands)`` to ``self.T_sb = None``. This prevents the code from calculating FK at every step which delays teleoperation.
-
-We also need to update usb rules for the robot. You could run the following commands to update the usb rules.
+1. If you already have ROS noetic installed, you could run `bash scripts/setup_aloha.sh`.
+2. As mentioned in Aloha README, you need to go to ``~/interbotix_ws/src/interbotix_ros_toolboxes/interbotix_xs_toolbox/interbotix_xs_modules/src/interbotix_xs_modules/arm.py``, find function ``publish_positions``. Change ``self.T_sb = mr.FKinSpace(self.robot_des.M, self.robot_des.Slist, self.joint_commands)`` to ``self.T_sb = None``. This prevents the code from calculating FK at every step which delays teleoperation.
+3. We also need to update usb rules for the robot. You could run the following commands to update the usb rules.
 ```console
 sudo bash scripts/modify_usb_rules.sh
 sudo udevadm control --reload && sudo udevadm trigger
 ```
-
-Remember to reboot the computer after the installation. If you encounter any problems, please refer to the [Aloha](https://github.com/tonyzhaozh/aloha).
-
-To test whether the robot installation is successful, you could run the following command:
+4. Remember to reboot the computer after the installation. If you encounter any problems, please refer to the [Aloha](https://github.com/tonyzhaozh/aloha).
+5. To test whether the robot installation is successful, you could run the following command:
 ```console
 # for boths sides
 roslaunch aloha 4arms_teleop.launch
@@ -187,9 +186,31 @@ roslaunch aloha 2arms_right_teleop.launch
 python gild/gild/real_world/aloha_simple_teleop.py --right
 ```
 
+### Calibrate Camera and Robot Transformation
+We found raw RealSense intrinsics are accurate enough for our pipeline, but you might want to verify it before proceeding.
+
+First, we calibrate the extrinsics between the camera and the world (i.e. calibration board) frame. We use [calib.io](https://calib.io/pages/camera-calibration-pattern-generator) to generate the calibration board. Please use `ChArUco` as `Target Type`. You could select the rest of options according to your preference and printing capability. Then you can click `Save calibration board as PDF` to download and print the calibration board. Then you could run
+```console
+python gild/gild/real_world/calibrate_realsenses.py --rows [NUM_ROWS] --cols [NUM_COLS] --checker_width [CHECKER_WIDTH] --marker_width [MARKER_WIDTH]
+```
+This will keep running calibration pipeline in a `while True` loop and save the calibration results in `gild/gild/real_world/cam_extrinsics`. To visualize the calibration results, you could run
+```console
+python gild/gild/real_world/vis_cam_cali.py --iterative
+```
+Enabling `--iterative` will visualize each camera's point cloud iteratively and aggregated point cloud at the end. Otherwise, it will only visualize the aggregated point cloud. You are expected to see a well-aligned point cloud of the workspace.
+
+Lastly, we calibrate the transformations between the robot base and the world frame, which is done manually. You could adjust `robot_base_in_world` within `gild/gild/real_world/calibrate_robot.py`, which represents the robots' base pose in the world (i.e. calibration board) frame. You could run
+```console
+python gild/gild/real_world/calibrate_robot.py
+```
+This will allow you to control robots and visualize the robot point cloud and the aggregated point cloud from cameras at the same time. You could adjust the robot base pose until the robot point cloud is well-aligned with the aggregated point cloud.
+
 ### Collect Demonstration
-- calibrate
-- collect
+You could collect demonstrations by running the following command:
+```console
+python gild/demo_real_aloha.py --output_dir [OUTPUT_DIR] --robot_sides [ROBOT_SIDE] --robot_sides [ROBOT_SIDE] # [ROBOT_SIDE] could be 'left' or 'right'
+```
+
 ### Train
 ### Infer in Real World
 ### Adapt to New Task
