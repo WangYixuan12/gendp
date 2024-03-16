@@ -19,7 +19,7 @@
     1. [Set Up Robot](#set-up-robot)
     2. [Calibrate Camera and Robot Transformation](#calibrate-camera-and-robot-transformation)
     3. [Collect Demonstration](#collect-demonstration)
-    4. [<span style="color:red">Train</span>](#train)
+    4. [Train](#train)
     5. [<span style="color:red">Infer in Real World</span>](#infer-in-real-world)
     6. [<span style="color:red">Adapt to New Task</span>](#adapt-to-new-task)
 
@@ -220,7 +220,15 @@ python train.py --config-dir=config/pen_real --config-name=distilled_dino_N_1000
 ```
 
 ### Infer in Real World
+Given a checkpoint, you could run the following command to infer in the real world:
+```console
+python eval_real_aloha.py -i [PATH_TO_CKPT] -o [OUTPUT_DIR] -r [ROBOT_SIDE] --vis_d3fields [true OR false]
+```
+
 ### Adapt to New Task
+To adapt our framework to new tasks, you could follow the following steps:
+1. Select reference features: 
+2. Update configurations:
 - label
 - modify config
   - input
