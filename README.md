@@ -20,8 +20,8 @@
     2. [Calibrate Camera and Robot Transformation](#calibrate-camera-and-robot-transformation)
     3. [Collect Demonstration](#collect-demonstration)
     4. [Train](#train)
-    5. [<span style="color:red">Infer in Real World</span>](#infer-in-real-world)
-    6. [<span style="color:red">Adapt to New Task</span>](#adapt-to-new-task)
+    5. [Infer in Real World](#infer-in-real-world)
+    6. [Adapt to New Task](#adapt-to-new-task)
 
 ## TODO:
 - [ ] Download checkpoints
@@ -142,6 +142,7 @@ training:
     checkpoint_every: the frequency of saving checkpoints
     rollout_every: the frequency of rolling out the policy in the env_runner
 ```
+Also, the configuration might be repetitive in the config file. Please sync them manually.
 
 ## :video_game: Infer in Simulator
 To run an existing policy in the simulator, use the following command:
@@ -210,6 +211,7 @@ You could collect demonstrations by running the following command:
 ```console
 python gild/demo_real_aloha.py --output_dir [OUTPUT_DIR] --robot_sides [ROBOT_SIDE] --robot_sides [ROBOT_SIDE] # [ROBOT_SIDE] could be 'left' or 'right'
 ```
+Press "C" to start recording. Use SpaceMouse to move the robot. Press "S" to stop recording. 
 
 ### Train
 The traning is similar to the training in the simulator. Here are two examples:
@@ -224,14 +226,30 @@ Given a checkpoint, you could run the following command to infer in the real wor
 ```console
 python eval_real_aloha.py -i [PATH_TO_CKPT] -o [OUTPUT_DIR] -r [ROBOT_SIDE] --vis_d3fields [true OR false]
 ```
+Press "C" to start evaluation (handing control over to the policy). Press "S" to stop the current episode.
 
 ### Adapt to New Task
 To adapt our framework to new tasks, you could follow the following steps:
-1. Select reference features: 
-2. Update configurations:
-- label
-- modify config
-  - input
-  - name
+1. You can select reference DINO features by running `python d3fields_dev/d3fields/scripts/sel_features.py`. This will provide an interactive interface to select the reference features given four arbitrary images. Click left mouse button to select the reference features and 'N' to next image. Click `Q` to quit and save the selected features.
+2. For the new task, you may need to update several important configuration entries.
+```console
+shape_meta:
+    action:
+        shape: 10 if using single robot and 20 for bimanual manipulation
+    obs:
+        d3fields:
+            shape: change the first number (number of channel). It is 3 if only using raw point cloud. It is 3 + number of reference features if using DINOv2 features.
+            info:
+                distill_dino: whether to add semantic information to the point cloud
+                distill_obj: the name for reference features, which are saved in `d3fields_dev/d3fields/sel_feats/[DISTILL_OBJ].npy`.
+                bounding_box: the bounding box for the workspace
+task_name: name for tasks, which will be used in wandb and logging files
+dataset_name: the name for the training dataset, which will be used to infer dataset_dir (e.g. ${data_root}/data/real_aloha_demo/${dataset_name} or  ${data_root}/data/sapien_demo/${dataset_name})
+```
 
 ## :pray: Acknowledgement
+
+This repository is built upon the following repositories. Thanks for their great work!
+- [Diffusion Policy](https://github.com/real-stanford/diffusion_policy)
+- [robomimic](https://github.com/ARISE-Initiative/robomimic)
+- [D3Fields](https://github.com/WangYixuan12/d3fields)
