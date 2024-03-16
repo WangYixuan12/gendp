@@ -1,32 +1,47 @@
-# GILD: Generalizable Imitation Learning with 3D Semantic Fields
+# GILD: Generalizable Imitation Learning with 3D Semantic Fields [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive)
 
-## Table of Contents
-1. [Install](#install)
-2. [Generate Dataset](#generate-dataset)
-    1. [Generate from Existing Environments](#generate-from-existing-environments)
-    2. [Generate from Customized Environments](#generate-from-customized-environments)
-    3. [Generate Large-Scale Data](#generate-large-scale-data)
-3. [Download Dataset](#download-dataset)
-4. [Visualize Dataset](#visualize-dataset)
-    1. [Visualize 2D Observation](#visualize-2d-observation)
-    2. [Visualize Aggregated 3D Observation](#visualize-aggregated-3d-observation)
-    3. [Visualize 3D Semantic Fields](#visualize-3d-semantic-fields)
-5. [Train](#train)
-    1. [Train GILD](#train-gild)
-    2. [Config Explanation](#config-explanation)
-6. [Infer in Simulator](#infer-in-simulator)
-7. [Deploy in Real World](#deploy-in-real-world)
-    1. [Set Up Robot](#set-up-robot)
-    2. [Calibrate Camera and Robot Transformation](#calibrate-camera-and-robot-transformation)
-    3. [Collect Demonstration](#collect-demonstration)
-    4. [Train](#train)
-    5. [Infer in Real World](#infer-in-real-world)
-    6. [Adapt to New Task](#adapt-to-new-task)
+[Website [Ongoing]](https://robopil.github.io/gild/) | [Paper [Coming soon]](https://arxiv.org/abs/2309.16118/) | [Colab [Ongoing]](https://colab.research.google.com)
+
+<a target="_blank" href="https://wangyixuan12.github.io/">Yixuan Wang</a><sup>1</sup>,
+<a target="_blank" href="https://binghao-huang.github.io/">Binghao Huang</a><sup>1</sup>,
+<a target="_blank" href="https://robopil.github.io/gild/">Guang Yin</a><sup>1</sup>,
+<a target="_blank" href="https://kelestemur.com/">Tarik Kelestemur</a><sup>2</sup>,
+<a target="_blank" href="https://yunzhuli.github.io/">Yunzhu Li</a><sup>1</sup>
+            
+<sup>1</sup>University of Illinois Urbana-Champaign,
+<sup>2</sup>Boston Dynamics AI Institute<br>
+
+## :bookmark_tabs: Table of Contents
+- [Install](#install)
+- [Generate Dataset](#generate-dataset)
+    - [Generate from Existing Environments](#generate-from-existing-environments)
+    - [Generate from Customized Environments](#generate-from-customized-environments)
+    - [Generate Large-Scale Data](#generate-large-scale-data)
+- [Download Dataset](#download-dataset)
+- [Visualize Dataset](#visualize-dataset)
+    - [Visualize 2D Observation](#visualize-2d-observation)
+    - [Visualize Aggregated 3D Observation](#visualize-aggregated-3d-observation)
+    - [Visualize 3D Semantic Fields](#visualize-3d-semantic-fields)
+- [Train](#train)
+    - [Train GILD](#train-gild)
+    - [Config Explanation](#config-explanation)
+- [Infer in Simulator](#infer-in-simulator)
+- [Deploy in Real World](#deploy-in-real-world)
+    - [Hardware Prerequisites](#hardware-prerequisites)
+    - [Set Up Robot](#set-up-robot)
+    - [Calibrate Camera and Robot Transformation](#calibrate-camera-and-robot-transformation)
+    - [Collect Demonstration](#collect-demonstration)
+    - [Train](#train-1)
+    - [Infer in Real World](#infer-in-real-world)
+    - [Adapt to New Task](#adapt-to-new-task)
 
 ## TODO:
 - [ ] Download checkpoints
 - [ ] Test in the real world
 - [ ] Go thru the whole README
+- [ ] Add Colab
+- [ ] Add Web
+- [ ] make github more better looking
 
 ## :hammer: Install
 We recommend [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) instead of the standard anaconda distribution for faster installation: 
