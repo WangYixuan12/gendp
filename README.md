@@ -189,15 +189,15 @@ sudo udevadm control --reload && sudo udevadm trigger
 4. Remember to reboot the computer after the installation. If you encounter any problems, please refer to the [Aloha](https://github.com/tonyzhaozh/aloha).
 5. To test whether the robot installation is successful, you could run the following command:
 ```console
-# for boths sides
+# boths sides
 roslaunch aloha 4arms_teleop.launch
 python gild/gild/real_world/aloha_simple_teleop.py --left --right
 
-# for left side
+# left side
 roslaunch aloha 2arms_left_teleop.launch
 python gild/gild/real_world/aloha_simple_teleop.py --left
 
-# for right side
+# right side
 roslaunch aloha 2arms_right_teleop.launch
 python gild/gild/real_world/aloha_simple_teleop.py --right
 ```
