@@ -3,6 +3,6 @@ chmod +x xsarm_amd64_install.sh
 ./xsarm_amd64_install.sh -d noetic
 source /opt/ros/noetic/setup.sh && source ~/interbotix_ws/devel/setup.sh
 cd ~/interbotix_ws/src
-git clone git@github.com:WangYixuan12/aloha.git # Yixuan's fork
+git clone https://github.com/WangYixuan12/aloha.git # Yixuan's fork
 cd ~/interbotix_ws
-catkin_make -DPYTHON_EXECUTABLE=/usr/bin/python3
+catkin_make
