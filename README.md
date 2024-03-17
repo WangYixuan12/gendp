@@ -11,6 +11,10 @@
 <sup>1</sup>University of Illinois Urbana-Champaign,
 <sup>2</sup>Boston Dynamics AI Institute<br>
 
+
+https://github.com/WangYixuan12/gild/assets/32333199/3cf948e4-94c9-4d08-a13e-7141bba43376
+
+
 ## :bookmark_tabs: Table of Contents
 - [Install](#install)
 - [Generate Dataset](#generate-dataset)
