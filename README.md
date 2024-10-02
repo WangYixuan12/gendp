@@ -1,4 +1,4 @@
-# GILD: Generalizable Imitation Learning with 3D Semantic Fields [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Yk6uDg2So9A3yWALR7mF5dhl_KKR24eh?usp=sharing)
+# GenDP: 3D Semantic Fields for Category-Level Generalizable Diffusion Policy [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Yk6uDg2So9A3yWALR7mF5dhl_KKR24eh?usp=sharing)
 
 [Website](https://robopil.github.io/gild/) | [Paper [Coming soon]](https://arxiv.org/) | [Colab](https://colab.research.google.com/drive/1Yk6uDg2So9A3yWALR7mF5dhl_KKR24eh?usp=sharing) | [Video](https://youtu.be/_Xl1cbVwGpM)
 
