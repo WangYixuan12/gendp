@@ -1,18 +1,31 @@
-import time
 import argparse
+import time
 
+import numpy as np
+from gild.common.aloha_utils import (
+    DT,
+    MASTER2PUPPET_JOINT_FN,
+    MASTER_GRIPPER_JOINT_MID,
+    MASTER_GRIPPER_JOINT_CLOSE,
+    PUPPET_GRIPPER_JOINT_CLOSE,
+    START_ARM_POSE,
+    get_arm_gripper_positions,
+    move_arms,
+    move_grippers,
+    torque_off,
+    torque_on,
+)
 from interbotix_xs_modules.arm import InterbotixManipulatorXS
 from interbotix_xs_msgs.msg import JointSingleCommand
-from gild.common.aloha_utils import (
-    torque_on, torque_off, move_arms, move_grippers, get_arm_gripper_positions,
-    START_ARM_POSE, MASTER_GRIPPER_JOINT_MID, PUPPET_GRIPPER_JOINT_CLOSE, DT, MASTER2PUPPET_JOINT_FN
-)
+
 
 def prep_robots(master_bot, puppet_bot):
     # reboot gripper motors, and set operating modes for all motors
     puppet_bot.dxl.robot_reboot_motors("single", "gripper", True)
     puppet_bot.dxl.robot_set_operating_modes("group", "arm", "position")
-    puppet_bot.dxl.robot_set_operating_modes("single", "gripper", "current_based_position")
+    puppet_bot.dxl.robot_set_operating_modes(
+        "single", "gripper", "current_based_position"
+    )
     master_bot.dxl.robot_set_operating_modes("group", "arm", "position")
     master_bot.dxl.robot_set_operating_modes("single", "gripper", "position")
     # puppet_bot.dxl.robot_set_motor_registers("single", "gripper", 'current_limit', 1000) # TODO(tonyzhaozh) figure out how to set this limit
@@ -23,28 +36,33 @@ def prep_robots(master_bot, puppet_bot):
     start_arm_qpos = START_ARM_POSE[:6]
     move_arms([master_bot, puppet_bot], [start_arm_qpos] * 2, move_time=1)
     # move grippers to starting position
-    move_grippers([master_bot, puppet_bot], [MASTER_GRIPPER_JOINT_MID, PUPPET_GRIPPER_JOINT_CLOSE], move_time=0.5)
+    move_grippers(
+        [master_bot, puppet_bot],
+        [MASTER_GRIPPER_JOINT_MID, PUPPET_GRIPPER_JOINT_CLOSE],
+        move_time=0.5,
+    )
 
 
 def press_to_start(master_bot):
     # press gripper to start data collection
     # disable torque for only gripper joint of master robot to allow user movement
     master_bot.dxl.robot_torque_enable("single", "gripper", False)
-    print(f'Close the gripper to start')
-    close_thresh = -0.3
+    print("Close the gripper to start")
+    close_thresh = (MASTER_GRIPPER_JOINT_MID + MASTER_GRIPPER_JOINT_CLOSE) / 2.0
     pressed = False
     while not pressed:
         gripper_pos = get_arm_gripper_positions(master_bot)
         if gripper_pos < close_thresh:
             pressed = True
-        time.sleep(DT/10)
+        time.sleep(DT / 10)
     torque_off(master_bot)
-    print(f'Started!')
+    print("Started!")
+
 
 def teleop(robot_sides):
     """ A standalone function for experimenting with teleoperation. No data recording. """
     num_bot = len(robot_sides)
-    puppet_bots = [InterbotixManipulatorXS(robot_model="vx300s", group_name="arm", gripper_name="gripper", robot_name=f'puppet_{robot_sides[0]}', init_node=True) for robot_side in robot_sides]
+    puppet_bots = [InterbotixManipulatorXS(robot_model="vx300s", group_name="arm", gripper_name="gripper", robot_name=f'puppet_{robot_sides[0]}', init_node=True)]
     puppet_bots += [InterbotixManipulatorXS(robot_model="vx300s", group_name="arm", gripper_name="gripper", robot_name=f'puppet_{robot_side}', init_node=False) for robot_side in robot_sides[1:]]
     master_bots = [InterbotixManipulatorXS(robot_model="wx250s", group_name="arm", gripper_name="gripper", robot_name=f'master_{robot_side}', init_node=False) for robot_side in robot_sides]
 

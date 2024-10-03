@@ -186,7 +186,7 @@ pip install -e d3fields_dev/
 ### Set Up Robot
 1. If you already have ROS noetic installed, you could run `bash scripts/setup_aloha.sh` **outside** of conda environments. Remember to put `source /opt/ros/noetic/setup.sh && source ~/interbotix_ws/devel/setup.sh` into `~/.bashrc` after installation.
 2. As mentioned in Aloha README, you need to go to ``~/interbotix_ws/src/interbotix_ros_toolboxes/interbotix_xs_toolbox/interbotix_xs_modules/src/interbotix_xs_modules/arm.py``, find function ``publish_positions``. Change ``self.T_sb = mr.FKinSpace(self.robot_des.M, self.robot_des.Slist, self.joint_commands)`` to ``self.T_sb = None``. This prevents the code from calculating FK at every step which delays teleoperation.
-3. We also need to update usb rules for the robot. You could run the following commands to update the usb rules.
+3. We also need to update usb rules for the robot. You could run the following commands to update the usb rules. You might need to change the serial numbers to your own.
 ```console
 sudo bash scripts/modify_usb_rules.sh
 sudo udevadm control --reload && sudo udevadm trigger
