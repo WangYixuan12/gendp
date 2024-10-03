@@ -1,4 +1,4 @@
-name: gild
+name: gendp
 channels:
   - pytorch
   - pytorch3d
@@ -60,9 +60,9 @@ dependencies:
     - scipy==1.9.1
     - matplotlib==3.8.2
     - opencv-contrib-python==4.9.0.80
-    - git+https://github.com/WangYixuan12/GroundingDINO.git
+    - git+https://github.com/IDEA-Research/GroundingDINO.git
     - gdown==4.7.1
-    - git+https://github.com/WangYixuan12/urdfpy.git # urdfpy
+    - urchin==0.0.27 # urdfpy
     - pyrealsense2==2.54.2.5684
     - atomics==1.0.2
     - pynput==1.7.6
