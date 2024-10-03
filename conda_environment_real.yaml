@@ -67,3 +67,5 @@ dependencies:
     - atomics==1.0.2
     - pynput==1.6.0
     - pybullet==3.2.6
+    - rospkg==1.5.1
+    - modern_robotics==1.1.1
