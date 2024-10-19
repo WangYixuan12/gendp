@@ -1,0 +1,6 @@
+[submodule "diffusion_policy/d3fields_dev"]
+	path = diffusion_policy/d3fields_dev
+	url = git@github.com:WangYixuan12/d3fields_dev.git
+[submodule "robomimic"]
+	path = robomimic
+	url = git@github.com:WangYixuan12/robomimic.git

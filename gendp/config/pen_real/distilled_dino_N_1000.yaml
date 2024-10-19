@@ -1,0 +1,241 @@
+_target_: gendp.workspace.train_diffusion_unet_hybrid_workspace.TrainDiffusionUnetHybridWorkspace
+is_real: true
+data_root: /media/yixuan_2T/diffusion_policy
+output_dir: ${data_root}/data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+checkpoint:
+  save_last_ckpt: true
+  save_last_snapshot: false
+  topk:
+    format_str: epoch={epoch:04d}-test_mean_score={test_mean_score:.3f}.ckpt
+    k: 5
+    mode: max
+    monitor_key: test_mean_score
+dataloader:
+  batch_size: 64
+  num_workers: 8
+  persistent_workers: false
+  pin_memory: true
+  shuffle: true
+dataset_obs_steps: 2
+ema:
+  _target_: gendp.model.diffusion.ema_model.EMAModel
+  inv_gamma: 1.0
+  max_value: 0.9999
+  min_value: 0.0
+  power: 0.75
+  update_after_step: 0
+exp_name: default
+horizon: 16
+keypoint_visible_rate: 1.0
+logging:
+  group: null
+  id: null
+  mode: online
+  name: ${now:%Y.%m.%d}_${task_name}_${dataset_name}
+  project: gild_${task_name}
+  resume: false
+  tags:
+  - train_diffusion_unet_hybrid
+  - ${task_name}
+  - aloha
+  - realsense
+  - default
+n_action_steps: 8
+n_latency_steps: 0
+n_obs_steps: 2
+name: train_diffusion_unet_hybrid
+obs_as_global_cond: true
+optimizer:
+  _target_: torch.optim.AdamW
+  betas:
+  - 0.95
+  - 0.999
+  eps: 1.0e-08
+  lr: 0.0001
+  weight_decay: 1.0e-06
+past_action_visible: false
+policy:
+  _target_: gendp.policy.diffusion_unet_hybrid_image_policy.DiffusionUnetHybridImagePolicy
+  cond_predict_scale: true
+  diffusion_step_embed_dim: 128
+  down_dims:
+  - 512
+  - 1024
+  - 2048
+  eval_fixed_crop: true
+  horizon: 16
+  kernel_size: 5
+  n_action_steps: 8
+  n_groups: 8
+  n_obs_steps: 2
+  noise_scheduler:
+    _target_: diffusers.schedulers.scheduling_ddpm.DDPMScheduler
+    beta_end: 0.02
+    beta_schedule: squaredcos_cap_v2
+    beta_start: 0.0001
+    clip_sample: true
+    num_train_timesteps: 100
+    prediction_type: epsilon
+    variance_type: fixed_small
+  num_inference_steps: 100
+  obs_as_global_cond: true
+  obs_encoder_group_norm: true
+  feat_proc: distill # none, linear, mlp
+  compositional: false
+  shape_meta:
+    action:
+      shape:
+      - 20
+    obs:
+      d3fields:
+        shape:
+        - 5 # C
+        - 1000 # N
+        type: spatial
+        info:
+          reference_frame: robot
+          distill_dino: true
+          distill_obj: pen
+          view_keys:
+          - camera_0
+          - camera_1
+          - camera_2
+          - camera_3
+          N_gripper: 400
+          boundaries:
+            x_lower: -0.32
+            x_upper: 0.10
+            y_lower: -0.28
+            y_upper: 0.05
+            z_lower: 0.025
+            z_upper: 0.5
+          resize_ratio: 0.5
+shape_meta:
+  action:
+    shape:
+    - 20
+  obs:
+    d3fields:
+      shape:
+      - 5 # C
+      - 1000 # N
+      type: spatial
+      info:
+        reference_frame: robot
+        distill_dino: true
+        distill_obj: pen
+        view_keys:
+        - camera_0
+        - camera_1
+        - camera_2
+        - camera_3
+        N_gripper: 400
+        boundaries:
+          x_lower: -0.32
+          x_upper: 0.10
+          y_lower: -0.28
+          y_upper: 0.05
+          z_lower: 0.025
+          z_upper: 0.5
+        resize_ratio: 0.5
+task:
+  abs_action: true
+  dataset:
+    _target_: gendp.dataset.real_dataset.RealDataset
+    dataset_dir: ${data_root}/data/real_aloha_demo/${dataset_name}
+    vis_input: false
+    horizon: 16
+    pad_after: 7
+    pad_before: 1
+    rotation_rep: rotation_6d
+    seed: 42
+    n_obs_steps: 2
+    robot_name: trossen_vx300s_v3
+    exclude_colors: [yellow]
+    shape_meta:
+      action:
+        shape:
+        - 20
+      obs:
+        d3fields:
+          shape:
+          - 5 # C
+          - 1000 # N
+          type: spatial
+          info:
+            reference_frame: robot
+            distill_dino: true
+            distill_obj: pen
+            view_keys:
+            - camera_0
+            - camera_1
+            - camera_2
+            - camera_3
+            N_gripper: 400
+            boundaries:
+              x_lower: -0.32
+              x_upper: 0.10
+              y_lower: -0.28
+              y_upper: 0.05
+              z_lower: 0.025
+              z_upper: 0.5
+            resize_ratio: 0.5
+    use_cache: true
+    val_ratio: 0.1
+  dataset_dir: ${data_root}/data/real_aloha_demo/${dataset_name}
+  name: ${task_name}
+  shape_meta:
+    action:
+      shape:
+      - 20
+    obs:
+      d3fields:
+        shape:
+        - 5 # C
+        - 1000 # N
+        type: spatial
+        info:
+          reference_frame: robot
+          distill_dino: true
+          distill_obj: knife
+          view_keys:
+          - camera_0
+          - camera_1
+          - camera_2
+          - camera_3
+          N_gripper: 400
+          boundaries:
+            x_lower: -0.32
+            x_upper: 0.10
+            y_lower: -0.28
+            y_upper: 0.05
+            z_lower: 0.025
+            z_upper: 0.5
+          resize_ratio: 0.5
+  task_name: ${task_name}
+task_name: pen
+dataset_name: pen_real
+training:
+  checkpoint_every: 200
+  debug: false
+  device: cuda
+  device_id: 0
+  gradient_accumulate_every: 1
+  lr_scheduler: cosine
+  lr_warmup_steps: 500
+  max_train_steps: null
+  max_val_steps: null
+  num_epochs: 8000
+  resume: false
+  rollout_every: 200
+  sample_every: 5
+  seed: 42
+  tqdm_interval_sec: 1.0
+  use_ema: true
+  val_every: 10
+val_dataloader:
+  batch_size: 64
+  num_workers: 8
+  persistent_workers: false
+  pin_memory: true
+  shuffle: false
