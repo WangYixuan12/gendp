@@ -1,6 +1,6 @@
 # GenDP: 3D Semantic Fields for Category-Level Generalizable Diffusion Policy [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Yk6uDg2So9A3yWALR7mF5dhl_KKR24eh?usp=sharing)
 
-[Website](https://robopil.github.io/GenDP/) | [Paper [Coming soon]](https://arxiv.org/) | [Colab](https://colab.research.google.com/drive/1Yk6uDg2So9A3yWALR7mF5dhl_KKR24eh?usp=sharing) | [Video](https://youtu.be/6jUGmUaAEOc)
+[Website](https://robopil.github.io/GenDP/) | [Paper](https://arxiv.org/abs/2410.17488) | [Colab](https://colab.research.google.com/drive/1Yk6uDg2So9A3yWALR7mF5dhl_KKR24eh?usp=sharing) | [Video](https://youtu.be/6jUGmUaAEOc)
 
 <a target="_blank" href="https://wangyixuan12.github.io/">Yixuan Wang</a><sup>1</sup>,
 <a target="_blank" href="https://robopil.github.io/GenDP/">Guang Yin</a><sup>2</sup>,
