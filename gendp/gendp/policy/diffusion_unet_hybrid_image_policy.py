@@ -146,10 +146,6 @@ class DiffusionUnetHybridImagePolicy(BaseImagePolicy):
             encoder_kwargs['spatial']["core_kwargs"]["use_pos"] = False
             encoder_kwargs['spatial']["core_kwargs"]["decomp_part"] = False
         
-        # update arg for n_per_obj
-        if 'd3fields' in shape_meta['obs']:
-            encoder_kwargs['spatial']["core_kwargs"]["n_per_obj"] = shape_meta['obs']['d3fields']['info']['N_gripper']
-        
         encoder = ObservationGroupEncoder(
             observation_group_shapes=observation_group_shapes,
             encoder_kwargs=encoder_kwargs,

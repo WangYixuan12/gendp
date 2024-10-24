@@ -18,31 +18,29 @@ https://github.com/WangYixuan12/gendp/assets/32333199/f86c977b-bcce-45cf-b632-95
 
 
 ## :bookmark_tabs: Table of Contents
-- [Install](#install)
-- [Generate Dataset](#generate-dataset)
+- [Install](#hammer-install)
+- [Generate Dataset](#floppy_disk-generate-dataset)
     - [Generate from Existing Environments](#generate-from-existing-environments)
     - [Generate from Customized Environments](#generate-from-customized-environments)
     - [Generate Large-Scale Data](#generate-large-scale-data)
-- [Download Dataset](#download-dataset)
-- [Visualize Dataset](#visualize-dataset)
+- [Download Dataset](#inbox_tray-download-dataset)
+- [Visualize Dataset](#art-visualize-dataset)
     - [Visualize 2D Observation](#visualize-2d-observation)
     - [Visualize Aggregated 3D Observation](#visualize-aggregated-3d-observation)
     - [Visualize 3D Semantic Fields](#visualize-3d-semantic-fields)
-- [Train](#train)
-    - [Train GenDP](#train-gendp)
+- [Train](#gear-train)
+    - [Train in Simulation](#train-in-simulation)
     - [Config Explanation](#config-explanation)
-- [Infer in Simulator](#infer-in-simulator)
-- [Deploy in Real World](#deploy-in-real-world)
+- [Infer in Simulation](#video_game-infer-in-simulation)
+- [Deploy in Real World](#robot-deploy-in-real-world)
     - [Hardware Prerequisites](#hardware-prerequisites)
+    - [Install Environment for Real World](#install-environment-for-real-world)
     - [Set Up Robot](#set-up-robot)
     - [Calibrate Camera and Robot Transformation](#calibrate-camera-and-robot-transformation)
     - [Collect Demonstration](#collect-demonstration)
-    - [Train](#train-1)
+    - [Train in Real World](#train-in-real-world)
     - [Infer in Real World](#infer-in-real-world)
     - [Adapt to New Task](#adapt-to-new-task)
-
-## TODO:
-- [ ] Update checkpoints download
 
 ## :hammer: Install
 We recommend [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) instead of the standard anaconda distribution for faster installation: 
@@ -84,7 +82,7 @@ If you want to download a small dataset to test the whole pipeline, you can run 
 bash scripts/download_hang_mug.sh
 bash scripts/download_pencil_insertion.sh
 ```
-If the scripts do not work, you could manully download the data from [UIUC Box](https://uofi.box.com/s/n5gahx98s14actc695tn3z0fzl8twcyk) or [Google Drive](https://drive.google.com/drive/folders/1_znHpzBj4c3fulXqt-0UjceRij2SApsH?usp=drive_link) and unzip them.
+If the scripts do not work, you could manully download the data from [UIUC Box](https://uofi.box.com/s/n5gahx98s14actc695tn3z0fzl8twcyk) or [Google Drive](https://drive.google.com/drive/folders/1_znHpzBj4c3fulXqt-0UjceRij2SApsH?usp=sharing) and unzip them.
 
 ## :art: Visualize Dataset
 
@@ -111,7 +109,7 @@ This will visualize 3D semantic fields processed by [D3Fields](https://robopil.g
 
 ## :gear: Train
 
-### Train GenDP
+### Train in Simulation
 To run training, we first set the environment variables.
 ```console
 export OMP_NUM_THREADS=1
@@ -164,21 +162,21 @@ training:
 ```
 Also, the configuration might be repetitive in the config file. Please sync them manually.
 
-## :video_game: Infer in Simulator
+## :video_game: Infer in Simulation
 To run an existing policy in the simulator, use the following command:
 ```console
 cd [PATH_TO_REPO]/gendp
 python eval.py --checkpoint [PATH_TO_CHECKPOINT] --output_dir [OUTPUT_DIR] --n_test [NUM_TEST] --n_train [NUM_TRAIN] --n_test_vis [NUM_TEST_VIS] --n_train_vis [NUM_TRAIN_VIS] --test_obj_ls [OBJ_NAME_1] --test_obj_ls [OBJ_NAME_2] --data_root [PATH_TO_DATA]
 ```
-<!-- For example, we can run
+For example, we can run
 ```console
 python eval.py --checkpoint /home/yixuan/gendp/checkpoints/small_data/distilled_dino_N_4000/ckpt_00000000.pt --output_dir /home/yixuan/gendp/eval_results/small_data --n_test 10 --n_train 10 --n_test_vis 5 --n_train_vis 5 --test_obj_ls nescafe_mug --data_root /home/yixuan/gendp
-``` -->
+```
 To download the existing checkpoints, you could run the following commands.
 ```console
 bash scripts/download_ckpts.sh
 ```
-You can also download them from [UIUC Box](https://uofi.box.com) or [Google Drive](https://drive.google.com) and unzip them if the scipt fails.
+You can also download them from [UIUC Box](https://uofi.box.com/s/3hjv6obgxcn67abm7li2sa98npzry4d5) or [Google Drive](https://drive.google.com/drive/folders/1JRwLUXBUewRYNdY-dCp54CLAUiAdwrL1?usp=sharing) and unzip them if the scipt fails.
 
 
 ## :robot: Deploy in Real World
@@ -244,7 +242,7 @@ python gendp/demo_real_aloha.py --output_dir [OUTPUT_DIR] --robot_sides [ROBOT_S
 ```
 Press "C" to start recording. Use SpaceMouse to move the robot. Press "S" to stop recording. 
 
-### Train
+### Train in Real World
 The traning is similar to the training in the simulator. Here are two examples:
 ```console
 bash scripts/download_real_data.sh # download the real data

@@ -162,7 +162,12 @@ def d3fields_proc(fusion, shape_meta, color_seq, depth_seq, extri_seq, intri_seq
     use_dino = False
     distill_dino = shape_meta['info']['distill_dino'] if 'distill_dino' in shape_meta['info'] else False
     distill_obj = shape_meta['info']['distill_obj'] if 'distill_obj' in shape_meta['info'] else False
-    N_gripper = shape_meta['info']['N_gripper']
+    if "N_gripper" in shape_meta['info']:
+        N_gripper = shape_meta['info']['N_gripper']
+    elif "N_per_inst" in shape_meta['info']:
+        N_gripper = shape_meta['info']['N_per_inst'] # legacy name
+    else:
+        N_gripper = 100
     N_total = shape_meta['shape'][1]
     max_pts_num = shape_meta['shape'][1]
     

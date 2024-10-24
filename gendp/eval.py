@@ -12,6 +12,8 @@ import dill
 import wandb
 import json
 from omegaconf import open_dict
+import gendp
+sys.modules['diffusion_policy'] = gendp
 from gendp.workspace.base_workspace import BaseWorkspace
 
 @click.command()

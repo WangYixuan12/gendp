@@ -205,7 +205,6 @@ def load_robot(scene: sapien.Scene, robot_name, disable_self_collision=True) -> 
 
     elif "panda" in robot_name:
         arm_joint_names = [f"joint{i}" for i in range(1, 8)]
-        print("debug",arm_joint_names)
         for joint in robot.get_active_joints():
             name = joint.get_name()
             if name in arm_joint_names:
@@ -216,7 +215,6 @@ def load_robot(scene: sapien.Scene, robot_name, disable_self_collision=True) -> 
     elif "trossen" in robot_name:
         # arm_joint_names = [f"joint{i}" for i in range(0, 6)]
         # print(robot.get_active_joints())
-        # print("debug",arm_joint_names)
         for joint in robot.get_active_joints():
             name = joint.get_name()
             # if "left_finger" in name or "right_finger" in name:

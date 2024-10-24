@@ -71,11 +71,7 @@ class SapienSeriesImageRunner(BaseImageRunner):
             num_cam = len(shape_meta.obs['d3fields']['info']['view_keys'])
             fusion = Fusion(num_cam=num_cam, device='cuda', dtype=torch.float16)
         
-        if pca_name is not None:
-            pca_model_path = f"pca_model/{pca_name}.pkl"
-            pca_model = pickle.load(open(pca_model_path, 'rb'))
-        else:
-            pca_model = None
+        pca_model = None
 
         def env_fn(inst_name = None):
             if inst_name is not None:
